@@ -1,0 +1,4 @@
+1. GPIO12 =   
+2. GPIO13 = 
+3. GPIO18 = 
+4. GPIO19 =
