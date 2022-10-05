@@ -5,14 +5,20 @@
 
 import os     #importing os library so as to communicate with the system
 import time   #importing time library to make Rpi wait because its too impatient 
-# os.system ("sudo pigpiod") #Launching GPIO library
+os.system ("sudo pigpiod") #Launching GPIO library
 time.sleep(1) # As i said it is too impatient and so if this delay is removed you will get an error
 import pigpio #importing GPIO library
+from adafruit_servokit import ServoKit    #https://circuitpython.readthedocs.io/projects/servokit/en/latest/
 
 ESC=4  #Connect the ESC in this GPIO pin 
 
 pi = pigpio.pi();
+
 pi.set_servo_pulsewidth(ESC, 0) 
+control_pin = ServoKit(channels=16)
+print(control_pin)
+servo1 = control_pin.servo[0]
+print(servo1)
 
 max_value = 2000 #change this if your ESC's max value is different or leave it be
 min_value = 700  #change this if your ESC's min value is different or leave it be
@@ -109,16 +115,26 @@ def stop(): #This will stop every action your Pi is performing for ESC ofcourse.
     pi.stop()
 
 #This is the start of the program actually, to start the function it needs to be initialized before calling... stupid python.    
-inp = input()
-if inp == "manual":
-    manual_drive()
-elif inp == "calibrate":
-    calibrate()
-elif inp == "arm":
-    arm()
-elif inp == "control":
-    control()
-elif inp == "stop":
-    stop()
-else :
-    print ("Thank You for not following the things I'm saying... now you gotta restart the program STUPID!!")
+    inp = input()
+    if inp == "manual":
+        manual_drive()
+    elif inp == "calibrate":
+        calibrate()
+    elif inp == "arm":
+        arm()
+    elif inp == "control":
+        control()
+    elif inp == "stop":
+        stop()
+    else :
+        print ("Thank You for not following the things I'm saying... now you gotta restart the program STUPID!!")
+
+
+if __name__ == '__main__':
+    time.sleep(1)
+    pi.set_servo_pulsewidth(servo1, 1500)
+    time.sleep(1)
+    pi.set_servo_pulsewidth(servo1, 1000)
+    time.sleep(1)
+    pi.set_servo_pulsewidth(servo1, 500)
+    time.sleep(1)
