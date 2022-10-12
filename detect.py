@@ -3,7 +3,7 @@ import imutils
 import cv2
 import json
 
-with open('red_hsv.json', 'r') as openfile:
+with open('object_hsv.json', 'r') as openfile:
  
     # Reading from json file
     red_hsv = json.load(openfile)

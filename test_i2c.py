@@ -39,7 +39,6 @@ def pcaScenario():
             pca.servo[i].angle = j
             time.sleep(0.01)
         for j in range(MAX_ANG[i],MIN_ANG[i],-1):
-            print("Send angle {} to Servo {}".format(j,i))
             pca.servo[i].angle = j
             time.sleep(0.01)
         pca.servo[i].angle=None #disable channel
@@ -53,17 +52,16 @@ if __name__ == '__main__':
     # main()
     batas_bawah = 1542
     
-    # pca.servo[0].set_pulse_width_range(0, batas_bawah)
-
-    # i = 0
-    while True:
-        pca.continuous_servo[0].throttle = 0.0
-
-        # if (i < 180):
-        # nilai = (1305 - 1) / 6520
-        # pca.servo[0].fraction = 0.0
-        # print(nilai)
-            # i+=1
-    # time.sleep(100)
+    pca.servo[0].set_pulse_width_range(500, 2500)
+    pca.servo[0].angle = 30
 
 
+    # # i = 0
+    # while True:
+    #     # pca.continuous_servo[0].throttle = 0.0
+    #     # if (i < 180):
+    #     # nilai = (1305 - 1) / 6520
+    #     # pca.servo[0].fraction = 0.0
+    #     # print(nilai)
+    #         # i+=1
+    # # time.sleep(100)

@@ -21,10 +21,10 @@ import time
 #define GPIO pins
 direction= 21 # Direction (DIR) GPIO Pin
 step = 20 # Step GPIO Pin
-EN_pin = 24 # enable pin (LOW to enable)
+EN_pin = 16 # enable pin (LOW to enable)
 
 # Declare a instance of class pass GPIO pins numbers and the motor type
-mymotortest = RpiMotorLib.A4988Nema(direction, step, (24,26,28), "DRV8825")
+mymotortest = RpiMotorLib.A4988Nema(direction, step, (26,19,13), "A4988")
 GPIO.setup(EN_pin,GPIO.OUT) # set enable pin as output
 
 ###########################
@@ -37,8 +37,8 @@ while True:
     mymotortest.motor_go(False, # False=Clockwise, True=Counterclockwise
                          "Full" , # Step type (Full,Half,1/4,1/8,1/16,1/32)
                          200, # number of steps
-                         .0005, # step delay [sec]
-                         False, # True = print verbose output 
+                         0.01, # step delay [sec]
+                         True, # True = print verbose output 
                          .05) # initial delay [sec]
 
     time.sleep(1)
