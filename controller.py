@@ -1,16 +1,9 @@
 import RPi.GPIO as GPIO
 from time import sleep
-# from adafruit_servokit import ServoKit    #https://circuitpython.readthedocs.io/projects/servokit/en/latest/
+from adafruit_servokit import ServoKit    #https://circuitpython.readthedocs.io/projects/servokit/en/latest/
 
 
 class Controller:
-    # SET GPIO PINMODE TO ACTUAL PIN NUMBER ON RASPI
-    GPIO.setmode(GPIO.BOARD)
-    
-    # CONSTANT FOR STEPPER
-    step_sleep = 0.002
-    step_count = 2400 #200 = 1 step/180
-
     def __init__(self, stepperPinConfig, thrusterPinConfig, mainThrusterPinConfig, allServoPinConfig) -> None:
         self.stepperPinConfig = stepperPinConfig
         self.thrusterPinConfig = thrusterPinConfig
@@ -36,13 +29,6 @@ class Controller:
         
         pass
 
-    def log(self):
-        print(self.stepperPinConfig)
-        # print(self.pinConfig.stepper[0])
-        # print(self.pinConfig.stepper[1])
-        # print(self.pinConfig.stepper[2])
-        # print(self.pinConfig.stepper[3])
-        
     def forward_ballast(self):
         i = 0
         for i in range(self.step_count):
@@ -97,28 +83,60 @@ class Controller:
         pass
 
     def staticThruster(self, percentage):
-        
+        self.thrusterPinConfig[0].throttle = percentage
+        self.thrusterPinConfig[1].throttle = percentage
+        self.thrusterPinConfig[2].throttle = percentage
+        self.thrusterPinConfig[3].throttle = percentage
         pass
 
     def front(self):
+        self.allServoPinConfig[0].set_pulse_width_range(500 , 2500)
+        self.allServoPinConfig[0].angle = 90
         pass
 
     def back(self):
+        self.allServoPinConfig[0].set_pulse_width_range(500 , 2500)
+        self.allServoPinConfig[0].angle = 90 
         pass
 
     def left(self):
+        self.allServoPinConfig[0].set_pulse_width_range(500 , 2500)
+        self.allServoPinConfig[0].angle = 150
         pass
 
     def right(self):
+        self.allServoPinConfig[0].set_pulse_width_range(500 , 2500)
+        self.allServoPinConfig[0].angle = 30
         pass
 
     def horizontalFinUp(self):
+        self.allServoPinConfig[1].set_pulse_width_range(500 , 2500)
+        self.allServoPinConfig[1].angle = 150
         pass
 
     def horizontalFinDown(self):
+        self.allServoPinConfig[1].set_pulse_width_range(500 , 2500)
+        self.allServoPinConfig[1].angle = 30
         pass
 
 
 if __name__ == "__main__":
-    cnt = Controller(stepperPinConfig=[11,22,33,44])
-    cnt.log()
+
+    pca = ServoKit(channels=16)
+
+    mainFin = pca.servo[0]
+    secondaryFin = pca.servo[1]
+
+    leftFrontProp = pca.continuous_servo[5]
+    leftBackProp = pca.continuous_servo[6]
+    rightFrontProp = pca.continuous_servo[7]
+    rightBackProp = pca.continuous_servo[8]
+
+    mainProp = pca.continuous_servo[4]
+
+    controller = Controller(
+        stepperPinConfig=[11,22,33,44], 
+        thrusterPinConfig=[leftBackProp, leftFrontProp, rightBackProp, rightFrontProp], 
+        mainThrusterPinConfig=mainProp, 
+        allServoPinConfig=[mainFin, secondaryFin]
+        )
