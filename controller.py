@@ -97,7 +97,6 @@ class Controller:
         pass
 
     def staticThruster(self, percentage):
-        
         pass
 
     def front(self):
