@@ -1,5 +1,6 @@
 
 import threading
+from time import sleep
 import RPi.GPIO as GPIO
 from adafruit_servokit import ServoKit    
 from controller import controller as cntrl
@@ -15,24 +16,40 @@ def ballastButton(cnt):
                 ballast_status = 'empty'
                 cnt.backward_ballast()
 
-def runThruster(cnt, percentage):
-    global ballast_status
+def thrusterSpeedButton(): 
+    global thruster_speed
     while True:
-        print(ballast_status)
-        cnt.staticThruster(percentage)
+        if GPIO.input(thruster_speed_button) == GPIO.HIGH:
+            print(thruster_speed)
+            if thruster_speed >= 100:
+                thruster_speed = 0
+            else:
+                thruster_speed += 10
+            sleep(1.125)
 
+def runThruster(cnt):
+    global ballast_status, thruster_speed
+    while True:
+        print(ballast_status, thruster_speed)
+        cnt.staticThruster(thruster_speed)
+
+def runMissile(cnt):
+    while True:
+        # Change relay
+        pass
 
 if __name__ == "__main__":
 
     ballast_status = 'empty'
+    thruster_speed = 0
+    thruster_speed_button = 23
     ballast_button = 18
+
+    GPIO.setup(thruster_speed_button, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
     GPIO.setup(ballast_button, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
     step_sleep = 0.002
-
     step_count = 2400 
-
-    percentage = 80 
 
     pca = ServoKit(channels=16)
 
@@ -56,18 +73,17 @@ if __name__ == "__main__":
     controller.setStepperConfiguration(step_sleep, step_count)
 
     t1 = threading.Thread(target=ballastButton, args=(controller, ))
-    t2 = threading.Thread(target=runThruster, args=(controller, percentage))
+    t2 = threading.Thread(target=thrusterSpeedButton, args=( ))
+    t3 = threading.Thread(target=runThruster, args=(controller, ))
 
 	# starting thread 1
     t1.start()
     t2.start()
-
-    # print(t1.is_alive())
-    # print(t2.is_alive())
-
+    t3.start()
 
 	# # wait until thread 1 is completely executed
     # t1.join()
     # t2.join()
+    # t3.join()
 
 
