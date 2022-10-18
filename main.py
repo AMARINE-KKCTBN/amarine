@@ -5,38 +5,44 @@ import RPi.GPIO as GPIO
 from adafruit_servokit import ServoKit    
 from controller import controller as cntrl
 
+enabled_ = True
+
 def ballastButton(cnt): 
     global ballast_status
-    while True:
+    while enabled_:
         if GPIO.input(ballast_button) == GPIO.HIGH:
             if ballast_status == 'empty':
                 ballast_status = 'fill'
+                print("Filling...")
                 cnt.forward_ballast()
             else:
                 ballast_status = 'empty'
+                print("Filling...")
                 cnt.backward_ballast()
 
 def thrusterSpeedButton(): 
     global thruster_speed
-    while True:
+    while enabled_:
         if GPIO.input(thruster_speed_button) == GPIO.HIGH:
             print(thruster_speed)
             if thruster_speed >= 100:
                 thruster_speed = 0
             else:
                 thruster_speed += 10
+            # print("Speed: " + str(thruster_speed))
             sleep(1.125)
 
 def runThruster(cnt):
     global ballast_status, thruster_speed
-    while True:
-        print(ballast_status, thruster_speed)
+    while enabled_:
+        print("status: ", ballast_status, "speed: ", thruster_speed)
         cnt.staticThruster(thruster_speed)
 
 def runMissile():
     global relay_release, missile_button
-    while True:
+    while enabled_:
         if GPIO.input(missile_button) == GPIO.HIGH:
+            print("releasing...")
             GPIO.output(relay_release, GPIO.HIGH)
 
             
@@ -90,10 +96,13 @@ if __name__ == "__main__":
     t3.start()
     t4.start()
 
+    while enabled_:
+        for i in range(0,100):
+            i+=1
+        print("running")
+
 	# # wait until thread 1 is completely executed
     # t1.join()
     # t2.join()
     # t3.join()
     # t4.join()
-
-

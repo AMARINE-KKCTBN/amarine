@@ -33,7 +33,7 @@ GPIO.output(out4, GPIO.LOW)
 
 def cleanup():
     GPIO.output(out1, GPIO.LOW)
-    GPIO.output(out2, GPIO.LOW)  
+    GPIO.output(out2, GPIO.LOW)
     GPIO.output(out3, GPIO.LOW)
     GPIO.output(out4, GPIO.LOW)
     GPIO.cleanup()
@@ -94,7 +94,7 @@ def backward(step_):
 # the meat
 try:
     forward(step_count)
-    backward(step_count)
+    # backward(step_count)
     # i = 0
     # for i in range(step_count):
     #     if i%4==0:
