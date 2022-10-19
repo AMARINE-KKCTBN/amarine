@@ -1,35 +1,31 @@
-
 import threading
 from time import sleep
 import RPi.GPIO as GPIO
-from adafruit_servokit import ServoKit    
+from adafruit_servokit import ServoKit
 from controller import controller as cntrl
 
-enabled_ = True
-
-def ballastButton(cnt): 
-    global ballast_status
+def ballastButton(cnt):
+    global ballast_status, ballast_button
     while enabled_:
-        if GPIO.input(ballast_button) == GPIO.HIGH:
-            if ballast_status == 'empty':
-                ballast_status = 'fill'
+        if GPIO.input(ballast_button) == GPIO.LOW:
+            if ballast_status == "empty":
+                ballast_status = "fill"
                 print("Filling...")
                 cnt.forward_ballast()
             else:
-                ballast_status = 'empty'
+                ballast_status = "empty"
                 print("Filling...")
                 cnt.backward_ballast()
 
-def thrusterSpeedButton(): 
-    global thruster_speed
+
+def thrusterSpeedButton():
+    global thruster_speed, thruster_speed_button
     while enabled_:
-        if GPIO.input(thruster_speed_button) == GPIO.HIGH:
-            print(thruster_speed)
+        if GPIO.input(thruster_speed_button) == GPIO.LOW:
             if thruster_speed >= 100:
                 thruster_speed = 0
             else:
                 thruster_speed += 10
-            # print("Speed: " + str(thruster_speed))
             sleep(1.125)
 
 def runThruster(cnt):
@@ -38,23 +34,27 @@ def runThruster(cnt):
         print("status: ", ballast_status, "speed: ", thruster_speed)
         cnt.staticThruster(thruster_speed)
 
+
 def runMissile():
     global relay_release, missile_button
     while enabled_:
-        if GPIO.input(missile_button) == GPIO.HIGH:
+        if GPIO.input(missile_button) == GPIO.LOW:
             print("releasing...")
             GPIO.output(relay_release, GPIO.HIGH)
 
-            
+
 if __name__ == "__main__":
 
-    ballast_status = 'empty'
+    enabled_ = True
+
+    ballast_status = "empty"
     thruster_speed = 0
-    
+
     pca = ServoKit(channels=16)
 
     thruster_speed_button = 23
     ballast_button = 18
+    ballast_button = 15
     missile_button = 24
     relay_release = 25
 
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     GPIO.setup(relay_release, GPIO.OUT)
 
     step_sleep = 0.002
-    step_count = 2400 
+    step_count = 2400
 
     mainFin = pca.servo[0]
     secondaryFin = pca.servo[1]
@@ -77,31 +77,26 @@ if __name__ == "__main__":
     mainProp = pca.continuous_servo[4]
 
     controller = cntrl.Controller(
-        stepperPinConfig=[11,22,33,44], 
-        thrusterPinConfig=[leftBackProp, leftFrontProp, rightBackProp, rightFrontProp], 
-        mainThrusterPinConfig=mainProp, 
-        allServoPinConfig=[mainFin, secondaryFin]
+        stepperPinConfig=[11, 22, 33, 44],
+        thrusterPinConfig=[leftBackProp, leftFrontProp, rightBackProp, rightFrontProp],
+        mainThrusterPinConfig=mainProp,
+        allServoPinConfig=[mainFin, secondaryFin],
     )
 
     controller.setStepperConfiguration(step_sleep, step_count)
 
-    t1 = threading.Thread(target=ballastButton, args=(controller, ))
-    t2 = threading.Thread(target=thrusterSpeedButton, args=( ))
-    t3 = threading.Thread(target=runThruster, args=(controller, ))
-    t4 = threading.Thread(target=runMissile, args=( ))
+    t1 = threading.Thread(target=ballastButton, args=(controller,))
+    t2 = threading.Thread(target=thrusterSpeedButton, args=())
+    t3 = threading.Thread(target=runThruster, args=(controller,))
+    t4 = threading.Thread(target=runMissile, args=())
 
-	# starting thread 1
+    # starting thread 1
     t1.start()
     t2.start()
     t3.start()
     t4.start()
 
-    while enabled_:
-        for i in range(0,100):
-            i+=1
-        print("running")
-
-	# # wait until thread 1 is completely executed
+    # wait until thread 1 is completely executed
     # t1.join()
     # t2.join()
     # t3.join()

@@ -15,14 +15,15 @@ out4 = 22
 # careful lowering this, at some point you run into the mechanical limitation of how quick your motor can move
 step_sleep = 0.002
 
-step_count = 2400  # 200 = 1 step/180
+# step_count = 2400  # 200 = 1 step/180
+step_count = 2300  # 200 = 1 step/180
 
 # setting up
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(out1, GPIO.OUT)
 GPIO.setup(out2, GPIO.OUT)
 GPIO.setup(out3, GPIO.OUT)
-GPIO.setup(out4, GPIO.OUT)
+GPIO.setup(out4, GPIO.OUT)  
 
 # initializing
 GPIO.output(out1, GPIO.LOW)
@@ -33,7 +34,7 @@ GPIO.output(out4, GPIO.LOW)
 
 def cleanup():
     GPIO.output(out1, GPIO.LOW)
-    GPIO.output(out2, GPIO.LOW)  
+    GPIO.output(out2, GPIO.LOW)
     GPIO.output(out3, GPIO.LOW)
     GPIO.output(out4, GPIO.LOW)
     GPIO.cleanup()
