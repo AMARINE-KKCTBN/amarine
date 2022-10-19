@@ -7,23 +7,23 @@ import time
 # out3 = 20
 # out4 = 26
 
-out1 = 17
-out2 = 18
-out3 = 27
-out4 = 22
+out1 = 6
+out2 = 13
+out3 = 19
+out4 = 26
 
 # careful lowering this, at some point you run into the mechanical limitation of how quick your motor can move
 step_sleep = 0.002
 
 # step_count = 2400  # 200 = 1 step/180
-step_count = 2300  # 200 = 1 step/180
+step_count = 2400  # 200 = 1 step/180
 
 # setting up
-GPIO.setmode(GPIO.BCM)
+# GPIO.setmode(GPIO.BCM)
 GPIO.setup(out1, GPIO.OUT)
 GPIO.setup(out2, GPIO.OUT)
 GPIO.setup(out3, GPIO.OUT)
-GPIO.setup(out4, GPIO.OUT)  
+GPIO.setup(out4, GPIO.OUT)
 
 # initializing
 GPIO.output(out1, GPIO.LOW)
@@ -94,7 +94,7 @@ def backward(step_):
 
 # the meat
 try:
-    forward(step_count)
+    # forward(step_count)
     backward(step_count)
     # i = 0
     # for i in range(step_count):
