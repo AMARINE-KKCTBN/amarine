@@ -21,6 +21,8 @@ class Controller:
         self.step_count = step_count
         self.step_sleep = step_sleep
 
+        # GPIO.setmode(GPIO.BCM)
+
         # Set stepper pinout configuration
         GPIO.setup(self.stepperPinConfig[0], GPIO.OUT)
         GPIO.setup(self.stepperPinConfig[1], GPIO.OUT)
@@ -28,10 +30,10 @@ class Controller:
         GPIO.setup(self.stepperPinConfig[3], GPIO.OUT)
 
         # Init stepper pinout
-        GPIO.setup(self.stepperPinConfig[0], GPIO.LOW)
-        GPIO.setup(self.stepperPinConfig[1], GPIO.LOW)
-        GPIO.setup(self.stepperPinConfig[2], GPIO.LOW)
-        GPIO.setup(self.stepperPinConfig[3], GPIO.LOW)
+        GPIO.output(self.stepperPinConfig[0], GPIO.LOW)
+        GPIO.output(self.stepperPinConfig[1], GPIO.LOW)
+        GPIO.output(self.stepperPinConfig[2], GPIO.LOW)
+        GPIO.output(self.stepperPinConfig[3], GPIO.LOW)
 
     def forward_ballast(self):
         i = 0
@@ -57,8 +59,9 @@ class Controller:
                 GPIO.output(self.stepperPinConfig[2], GPIO.LOW)
                 GPIO.output(self.stepperPinConfig[1], GPIO.LOW)
                 GPIO.output(self.stepperPinConfig[0], GPIO.HIGH)
-            sleep(0.002)
-        
+            sleep(self.step_sleep)
+        # GPIO.cleanup()
+
     def backward_ballast(self):
         for i in range(self.step_count, 0, -1):
             print("BACKWARD step: " + str(i) + "/" + str(self.step_count))
@@ -82,7 +85,8 @@ class Controller:
                 GPIO.output(self.stepperPinConfig[2], GPIO.LOW)
                 GPIO.output(self.stepperPinConfig[1], GPIO.LOW)
                 GPIO.output(self.stepperPinConfig[0], GPIO.HIGH)
-            sleep(0.002)
+            sleep(self.step_sleep)
+        # GPIO.cleanup()
         
     def staticThruster(self, percentage):
         percentage /= 100
@@ -137,5 +141,4 @@ class Controller:
         GPIO.output(self.stepperPinConfig[2], GPIO.LOW)
         GPIO.output(self.stepperPinConfig[1], GPIO.LOW)
         GPIO.output(self.stepperPinConfig[0], GPIO.LOW)
-        GPIO.cleanup()
 

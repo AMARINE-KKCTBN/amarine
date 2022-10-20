@@ -1,0 +1,1 @@
+python /home/pi/KKCTBN-2022/main.py &
