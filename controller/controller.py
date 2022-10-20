@@ -2,7 +2,7 @@ import RPi.GPIO as GPIO
 from time import sleep
 from adafruit_servokit import (
     ServoKit,
-)  # https://circuitpython.readthedocs.io/projects/servokit/en/latest/
+)  
 
 class Controller:
     def __init__(
