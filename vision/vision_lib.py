@@ -68,6 +68,7 @@ class hsv_detector:
             with open(self.transform_params_path, 'r') as openfile:
                 self.transform_params = json.load(openfile)
         else:
+        
             self.transform_params = self.transform_empty
     
     def morph_image(self, img):
