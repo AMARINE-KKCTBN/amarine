@@ -1,21 +1,21 @@
 import cv2
 import numpy as np
 import json
-from os import path
+import math
 
 
 
 
 class hsv_detector:
-    def __init__(self):
+    def __init__(self, camera_height = 240, camera_width = 320):
         self.object_hsv_path = 'vision/object_hsv.json'
         self.field_hsv_path = 'vision/field_hsv.json'
         self.circle_params_path = 'vision/circle_params.json'
         self.transform_params_path = 'vision/transform_params.json'
         
         #init camera
-        self.camera_height = 240
-        self.camera_width = 320
+        self.camera_height = camera_height
+        self.camera_width = camera_width
         self.camera = cv2.VideoCapture(0)
         self.camera.set(cv2.CAP_PROP_FPS, 30)
         self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, self.camera_width)
@@ -59,12 +59,7 @@ class hsv_detector:
             cv2.destroyAllWindows()
             return False
         else:
-<<<<<<< HEAD
-        
-            self.transform_params = self.transform_empty
-=======
             return True
->>>>>>> e12d5e07677c7d11333a6569a7cdfca53da34fc8
     
     def morph_and_filter_image(self):
         self.object_mask = self.image_hsv
@@ -95,21 +90,38 @@ class hsv_detector:
         self.circle_y = -1
         self.circle_z = -1
         
+        coord_obj = None
+        
+        temp_x = -1
+        temp_y = -1
         biggest_radius = 0
         if self.circles is not None:
             self.circles = np.uint16(np.around(self.circles))
             # print(self.circles)
             for i in self.circles[0, :]:
                 # draw the outer circle
-                cv2.circle(self.image_output, (i[0], i[1]), i[2], (0, 255, 0), 2)
                 # draw the center of the circle
-                cv2.circle(self.image_output, (i[0], i[1]), 2, (0, 0, 255), 3)
                 # save output to variables
                 if i[2] > biggest_radius:
-                    self.circle_x = round(i[0] / self.camera_width * 2 - 1, 3)
-                    self.circle_y = round(i[1] / self.camera_height * 2 - 1, 3)
-                    self.circle_z = i[2]
-                    biggest_radius = self.circle_z
-                    
+                    coord_obj = i
+                    # cv2.circle(self.image_output, (i[0], i[1]), i[2], (0, 255, 0), 2)
+                    # cv2.circle(self.image_output, (i[0], i[1]), 2, (0, 0, 255), 3)
+                    temp_x = round(i[0] / self.camera_width * 2 - 1, 3)
+                    temp_y = round(i[1] / self.camera_height * 2 - 1, 3)
+                    biggest_radius = i[2]
+                    # distance = self.get_distance(self.circle_x - temp_x, self.circle_y - temp_y)
+                    # if distance < 1.5:
+                        # else:
+                    # print("distance: " + str(distance))
+            self.circle_x = temp_x
+            self.circle_y = temp_y
+            self.circle_z = biggest_radius
+            cv2.circle(self.image_output, (coord_obj[0], coord_obj[1]), coord_obj[2], (0, 255, 0), 2)
+            cv2.circle(self.image_output, (coord_obj[0], coord_obj[1]), 2, (0, 0, 255), 3)
+        
+    
+    def get_distance(self, a, b):
+        return math.sqrt(math.pow(a, 2) + math.pow(b, 2))
+                  
     def get_circle_x(self):
         return self.circle_x

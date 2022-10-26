@@ -15,6 +15,7 @@ from time import sleep
 import RPi.GPIO as GPIO
 from adafruit_servokit import ServoKit
 from controller import controller as cntrl
+from vision import vision_lib
 
 
 def ballastButton(cnt, lock):
@@ -91,6 +92,16 @@ def servoRunning(cnt):
         cnt.right()
         sleep(1)
 
+def objectDetection():
+    vision = vision_lib.hsv_detector()
+    global circle_x
+    while enabled_:
+        vision.read_camera()
+        vision.detect_circle_object()
+        circle_x = vision.get_circle_x()
+        print("coord: " + str(circle_x))
+        if not vision.show_image():
+            break 
 
 def runMainThruster(cnt):
     while enabled_:
@@ -157,7 +168,10 @@ if __name__ == "__main__":
     p6 = multiprocessing.Process(target=servoRunning, args=(controller,))
     t3 = threading.Thread(target=runThruster, args=(controller,))
     t5 = threading.Thread(target=runMainThruster, args=(controller,))
-
+    
+    thread_vision = threading.Thread(target=objectDetection, args=( ))
+    thread_vision.start()
+    
     # t4 = threading.Thread(target=runMissile, args=())
     # t5 = threading.Thread(target=isRunning, args=())
 
@@ -171,6 +185,7 @@ if __name__ == "__main__":
     t2.start()
     t3.start()
 
+    
     # t4.start()
     # t5.start()
 

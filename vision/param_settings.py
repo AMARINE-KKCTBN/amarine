@@ -35,10 +35,10 @@ transform_empty = {
     "field_canny_param2" : 150,
     "field_morph_kernel" : 7,
 }
-object_hsv_path = 'object_hsv.json'
-field_hsv_path = 'field_hsv.json'
-circle_params_path = 'circle_params.json'
-transform_params_path = 'transform_params.json'
+object_hsv_path = 'vision/object_hsv.json'
+field_hsv_path = 'vision/field_hsv.json'
+circle_params_path = 'vision/circle_params.json'
+transform_params_path = 'vision/transform_params.json'
 
 if path.exists(object_hsv_path):
     with open(object_hsv_path, 'r') as openfile:
@@ -210,9 +210,10 @@ while(1):
     object_LowerRegion = np.array([object_hsv['H Lower'],object_hsv['S Lower'],object_hsv['V Lower']],np.uint8)
     object_upperRegion = np.array([object_hsv['H Higher'],object_hsv['S Higher'],object_hsv['V Higher']],np.uint8)
 
+    object_mask = hsv
     #morphological operations
-    object_mask = cv2.morphologyEx(hsv,cv2.MORPH_OPEN, object_kernel)
-    object_mask = cv2.morphologyEx(hsv,cv2.MORPH_CLOSE, object_kernel)
+    object_mask = cv2.morphologyEx(object_mask,cv2.MORPH_CLOSE, object_kernel)
+    object_mask = cv2.morphologyEx(object_mask,cv2.MORPH_OPEN, object_kernel)
     
     #sub: dilate-erode
     # object_mask = cv2.dilate(object_mask, object_kernel,iterations=1)
