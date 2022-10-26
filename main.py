@@ -93,14 +93,16 @@ def servoRunning(cnt):
         sleep(1)
 
 def objectDetection():
+    global coord_x
+    offset_x = 0.5
     vision = vision_lib.hsv_detector(camera_height=240, camera_width=320, masking_enabled=False)
-    global circle_x
     while enabled_:
         vision.detect_circle_object()
-        coord_x = vision.get_circle_x()
         if coord_x < 0:
             coord_x = -1
-        print("coord: " + str(coord_x))
+        else:
+            coord_x -= offset_x
+        print("coord: " + str(round(coord_x, 3)))
 
 def runMainThruster(cnt):
     while enabled_:
