@@ -93,15 +93,14 @@ def servoRunning(cnt):
         sleep(1)
 
 def objectDetection():
-    vision = vision_lib.hsv_detector()
+    vision = vision_lib.hsv_detector(camera_height=240, camera_width=320, masking_enabled=False)
     global circle_x
     while enabled_:
-        vision.read_camera()
         vision.detect_circle_object()
-        circle_x = vision.get_circle_x()
-        print("coord: " + str(circle_x))
-        if not vision.show_image():
-            break 
+        coord_x = vision.get_circle_x()
+        if coord_x < 0:
+            coord_x = -1
+        print("coord: " + str(coord_x))
 
 def runMainThruster(cnt):
     while enabled_:
@@ -157,6 +156,8 @@ if __name__ == "__main__":
     # controller.forward_ballast()
     # controller.cleanup()
 
+    thread_vision = threading.Thread(target=objectDetection, args=( ))
+    
     # t1 = threading.Thread(target=ballastButton, args=(controller, lock))
     t2 = threading.Thread(target=thrusterSpeedButton, args=( ))
 
@@ -169,13 +170,12 @@ if __name__ == "__main__":
     t3 = threading.Thread(target=runThruster, args=(controller,))
     t5 = threading.Thread(target=runMainThruster, args=(controller,))
     
-    thread_vision = threading.Thread(target=objectDetection, args=( ))
-    thread_vision.start()
     
     # t4 = threading.Thread(target=runMissile, args=())
     # t5 = threading.Thread(target=isRunning, args=())
 
     # # starting thread 1
+    thread_vision.start()
     p1.start()
     # p2.start()
     # p3.start()
@@ -190,6 +190,7 @@ if __name__ == "__main__":
     # t5.start()
 
     # wait until thread 1 is completely executed
+    thread_vision.join()
     p1.join()
     # p2.join()
     # p3.join()
