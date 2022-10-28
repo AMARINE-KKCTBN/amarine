@@ -1,8 +1,5 @@
 import RPi.GPIO as GPIO
 from time import sleep
-from adafruit_servokit import (
-    ServoKit,
-)  
 
 class Controller:
     def __init__(
@@ -20,8 +17,6 @@ class Controller:
     def setStepperConfiguration(self, step_sleep, step_count):
         self.step_count = step_count
         self.step_sleep = step_sleep
-
-        # GPIO.setmode(GPIO.BCM)
 
         # Set stepper pinout configuration
         GPIO.setup(self.stepperPinConfig[0], GPIO.OUT)

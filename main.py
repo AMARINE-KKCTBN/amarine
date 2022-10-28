@@ -15,8 +15,6 @@ import RPi.GPIO as GPIO
 from adafruit_servokit import ServoKit
 from controller import controller as cntrl
 
-
-
 def ballastButton(cnt):
     global ballast_status, ballast_button
     while enabled_:
