@@ -86,7 +86,7 @@ if __name__ == "__main__":
 
     pca = ServoKit(channels=16)
 
-    thruster_speed_button = 23
+    thruster_speed_button = 16
     # ballast_button = 15
     missile_button = 24
     relay_release = 25
