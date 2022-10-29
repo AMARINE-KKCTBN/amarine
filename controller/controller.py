@@ -1,5 +1,8 @@
 import RPi.GPIO as GPIO
 from time import sleep
+from adafruit_servokit import (
+    ServoKit,
+)  # https://circuitpython.readthedocs.io/projects/servokit/en/latest/
 
 class Controller:
     def __init__(
@@ -55,7 +58,6 @@ class Controller:
                 GPIO.output(self.stepperPinConfig[1], GPIO.LOW)
                 GPIO.output(self.stepperPinConfig[0], GPIO.HIGH)
             sleep(self.step_sleep)
-        # GPIO.cleanup()
 
     def backward_ballast(self):
         for i in range(self.step_count, 0, -1):
@@ -81,19 +83,24 @@ class Controller:
                 GPIO.output(self.stepperPinConfig[1], GPIO.LOW)
                 GPIO.output(self.stepperPinConfig[0], GPIO.HIGH)
             sleep(self.step_sleep)
-        # GPIO.cleanup()
         
     def staticThruster(self, percentage):
         percentage /= 100
-        self.thrusterPinConfig[0].throttle = percentage
+        self.thrusterPinConfig[0].throttle = percentage * -1
         sleep(0.002)
-        self.thrusterPinConfig[1].throttle = percentage
+        self.thrusterPinConfig[1].throttle = percentage 
         sleep(0.002)
-        self.thrusterPinConfig[2].throttle = percentage
+        self.thrusterPinConfig[2].throttle = percentage 
         sleep(0.002)
-        self.thrusterPinConfig[3].throttle = percentage
+        self.thrusterPinConfig[3].throttle = percentage * -1
         sleep(0.002)
-        print("RUNNING 4 THRUSTER ON " + str(percentage))
+
+    def mainThruster(self):        
+        self.mainThrusterPinConfig.throttle = 0.1
+        sleep(0.002)
+
+    def initMainThruster(self):        
+        self.mainThrusterPinConfig.throttle = 0.0
         sleep(0.002)
 
     def front(self):
@@ -101,7 +108,6 @@ class Controller:
         sleep(0.002)
         self.allServoPinConfig[0].angle = 90
         
-
     def back(self):
         self.allServoPinConfig[0].set_pulse_width_range(500, 2500)
         sleep(0.002)
