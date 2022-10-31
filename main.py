@@ -22,7 +22,6 @@ def thrusterSpeedButton():
 def runThruster(cnt):
     global ballast_status, thruster_speed
     while enabled_:
-        # print("RUNNING 4 THRUSTER ON " + str(thruster_speed))        
         cnt.staticThruster(thruster_speed)
 
 def runMissile():
@@ -48,58 +47,67 @@ def isRunning():
         print("MATI")
 
 def servoRunning(cnt):
+    global coord_x
     while enabled_:
-        cnt.horizontalFinUp()
-        sleep(1)
-        cnt.horizontalFinDown()
-        sleep(1)
-        cnt.left()
-        sleep(1)
-        cnt.right()
-        sleep(1)
+        if coord_x > 0:
+            cnt.left()
+            print("LEFT")
+        elif coord_x == 0:
+            cnt.forward()
+            print("FORWARD")
+        else:
+            print("RIGHT")
+            cnt.right()
+        sleep(0.1)
 
-def objectDetection():
+def objectDetection(vision):
     global coord_x
     offset_x = 0.5
-    vision = vision_lib.hsv_detector(camera_height=240, camera_width=320, masking_enabled=False)
+    # vision = vision_lib.hsv_detector(camera_height=240, camera_width=320, masking_enabled=False)
     while enabled_:
         vision.detect_circle_object()
+        coord_x, coord_y, coord_z = vision.get_circle_coord()
         if coord_x < 0:
             coord_x = -1
         else:
             coord_x -= offset_x
-        print("coord: " + str(round(coord_x, 3)))
+        print("coord: " + str(vision.get_circle_coord()))
+        # if not vision.show_image():
+        #     break 
 
 def runMainThruster(cnt):
+    global main_thruster_speed
     while enabled_:
+        print("RUNNING MAIN THRUSTER ON ", main_thruster_speed)
         cnt.mainThruster()
+
+def shutdownProgram():
+    global enabled_, shutdown_program_button
+    while True:
+        if GPIO.input(shutdown_program_button) == GPIO.LOW:
+            enabled_ = not enabled_
 
 if __name__ == "__main__":
 
     enabled_ = True
+    coord_x = 0
 
-    # ballast_status = "empty"
     thruster_speed = 0
     missile_status = False
 
-    # lock = threading.Lock()
-
     pca = ServoKit(channels=16)
 
+    main_thruster_speed = 10
     thruster_speed_button = 16
-    # ballast_button = 15
+    shutdown_program_button = 20
     missile_button = 24
     relay_release = 25
     led = 5
 
     GPIO.setup(thruster_speed_button, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    # GPIO.setup(ballast_button, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     GPIO.setup(missile_button, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     GPIO.setup(relay_release, GPIO.OUT)
     GPIO.setup(led, GPIO.OUT)
-
-    # step_sleep = 0.00125
-    # step_count = 2400
 
     mainFin = pca.servo[8]
     secondaryFin = pca.servo[9]
@@ -112,30 +120,26 @@ if __name__ == "__main__":
     mainProp = pca.continuous_servo[4]
 
     controller = cntrl.Controller(
-        stepperPinConfig=[6, 13, 19, 26],
         thrusterPinConfig=[leftBackProp, leftFrontProp, rightBackProp, rightFrontProp],
         mainThrusterPinConfig=mainProp,
         allServoPinConfig=[mainFin, secondaryFin],
+        mainThrusterSpeed=main_thruster_speed
     )
 
-    # controller.setStepperConfiguration(step_sleep, step_count)
-    # controller.initMainThruster()
-
-    # controller.backward_ballast()
-    # controller.forward_ballast()
-    # controller.cleanup()
-
-
-    # 4 Thruster Thread
+    vision = vision_lib.hsv_detector(camera_height=240, camera_width=320, masking_enabled=False)
+    
+    vision_thread = threading.Thread(target=objectDetection, args=(vision, ))
     runThruster_thread = threading.Thread(target=runThruster, args=(controller,))
     buttonThruster_thread = threading.Thread(target=thrusterSpeedButton, args=( ))
     runMissile_thread = threading.Thread(target=runMissile, args=())
 
     # RUN THREAD
+    vision_thread.start()
     runThruster_thread.start()
     buttonThruster_thread.start()
     runMissile_thread.start()
     
+    vision_thread.join()
     runThruster_thread.join()
     buttonThruster_thread.join()
     runMissile_thread.join()
