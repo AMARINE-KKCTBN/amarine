@@ -206,6 +206,8 @@ while(1):
 
     object_kernel = np.ones((transform_params['object_morph_kernel'],transform_params['object_morph_kernel']),"uint8")
 
+    if object_hsv['H Lower'] > object_hsv['H Higher']:
+        object_hsv['H Lower'], object_hsv['H Higher'] = object_hsv['H Higher'], object_hsv['H Lower']
     #red
     object_LowerRegion = np.array([object_hsv['H Lower'],object_hsv['S Lower'],object_hsv['V Lower']],np.uint8)
     object_upperRegion = np.array([object_hsv['H Higher'],object_hsv['S Higher'],object_hsv['V Higher']],np.uint8)

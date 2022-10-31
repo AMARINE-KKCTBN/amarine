@@ -4,7 +4,7 @@ import json
 import math
 
 class hsv_detector:
-    def __init__(self, camera_height = 240, camera_width = 320, masking_enabled = False):
+    def __init__(self, camera_height = 600, camera_width = 400, masking_enabled = False):
         self.object_hsv_path = 'vision/object_hsv.json'
         self.field_hsv_path = 'vision/field_hsv.json'
         self.circle_params_path = 'vision/circle_params.json'
@@ -60,7 +60,6 @@ class hsv_detector:
             cv2.imshow("Field-mask Image", self.field_mask)
             # cv2.imshow("Output with Field-masking", self.object_with_mask)
             
-        
         if cv2.waitKey(10) & 0xFF == ord('q'):
             self.camera.release()
             cv2.destroyAllWindows()
@@ -157,5 +156,5 @@ class hsv_detector:
     def get_distance(self, a, b):
         return math.sqrt(math.pow(a, 2) + math.pow(b, 2))
                   
-    def get_circle_x(self):
-        return self.circle_x
+    def get_circle_coord(self):
+        return self.circle_x, self.circle_y, self.circle_z
