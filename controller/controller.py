@@ -40,16 +40,23 @@ class Controller:
         self.allServoPinConfig[0].set_pulse_width_range(500, 2500)
         sleep(0.002)
         self.allServoPinConfig[0].angle = 90
-                
+        sleep(0.002)
+
     def left(self):
         self.allServoPinConfig[0].set_pulse_width_range(500, 2500)
         sleep(0.002)
         self.allServoPinConfig[0].angle = 150
-        
+        sleep(0.002)
+
     def right(self):
         self.allServoPinConfig[0].set_pulse_width_range(500, 2500)
         sleep(0.002)
         self.allServoPinConfig[0].angle = 30
+        sleep(0.002)
+
+    def stop(self):
+        self.mainThrusterPinConfig.throttle = 0.0
+        sleep(0.002)
 
     def cleanup(self):
         GPIO.output(self.stepperPinConfig[3], GPIO.LOW)
