@@ -27,7 +27,6 @@ def runThruster(cnt):
 
 def runMainThruster(cnt, serial):
     global thruster_run, main_thruster_speed
-    count = 0
     while True:
         data = serial.readline().decode('utf-8')
         print("DATA: ", data)
@@ -38,21 +37,6 @@ def runMainThruster(cnt, serial):
             else:
                 print("STOP THRUSTER")
                 cnt.mainThruster(0)
-        # if count < 5:
-        #     print("COUNT KURANG DARI 5")
-        # if serial.in_waiting > 0:
-        #     if count < 5 and data == "0\r\n":
-        #         print("INIT...", count)
-        #     else:
-        #         print("COUNT...", count)
-        #         if data == "1\r\n":
-        #             print("RUNNING THRUSTER")
-        #             cnt.mainThruster(main_thruster_speed)
-        #         else:
-        #             print("STOP THRUSTER")
-        #             cnt.mainThruster(0)
-        #         count=5
-        #     count+=1
             sleep(0.1)
 
 def runMissile():
