@@ -31,13 +31,13 @@ def runMainThruster(cnt, serial):
     while True:
         data = serial.readline().decode('utf-8')
         print("DATA: ", data)
-        if serial.in_waiting > 0:
-            if data == "1\r\n":
-                print("RUNNING THRUSTER")
-                cnt.mainThruster(main_thruster_speed)
-            else:
-                print("STOP THRUSTER")
-                cnt.mainThruster(0)
+        # if serial.in_waiting > 0:
+        if data == "1\r\n":
+            print("RUNNING THRUSTER")
+            cnt.mainThruster(main_thruster_speed)
+        else:
+            print("STOP THRUSTER")
+            cnt.mainThruster(0)
         # if count < 5:
         #     print("COUNT KURANG DARI 5")
         # if serial.in_waiting > 0:
