@@ -1,4 +1,3 @@
-from ast import arg
 import threading
 import multiprocessing
 from time import sleep
@@ -6,6 +5,7 @@ import RPi.GPIO as GPIO
 from adafruit_servokit import ServoKit
 from controller import controller as cntrl
 from vision import vision_lib
+# import serial
 
 def thrusterSpeedButton():
     global thruster_speed, thruster_speed_button
@@ -21,9 +21,19 @@ def thrusterSpeedButton():
             sleep(1.5)
 
 def runThruster(cnt):
-    global ballast_status, thruster_speed
+    global thruster_speed
     while True:
         cnt.staticThruster(thruster_speed)
+
+def runMainThruster(cnt):
+    global thruster_run, main_thruster_speed
+    while True:
+        if not GPIO.input(thruster_run) == GPIO.HIGH:
+            print("RUNNING THRUSTER")
+            cnt.mainThruster(main_thruster_speed)
+        else:
+            print("STOP THRUSTER")
+            cnt.mainThruster(0)
 
 def runMissile():
     global relay_release, missile_button, missile_status
@@ -53,15 +63,15 @@ def servoRunning(cnt, val):
         coord_x = val.value
         if coord_x >= -0.200 and coord_x <= 0.200:
             cnt.forward()
-            cnt.mainThruster()
+            # cnt.mainThruster()
             print("FORWARD")
         elif coord_x > 0.200:
             cnt.right()
-            cnt.mainThruster()
-            print("FORWARD")
+            # cnt.mainThruster()
+            print("RIGHT")
         else:
-            cnt.stop()            
-            print("STOP")
+            cnt.left()            
+            print("LEFT")
         sleep(0.1)
 
 def objectDetection(vision, val):
@@ -92,18 +102,29 @@ if __name__ == "__main__":
 
     # INIT VARIABLE
     coord_x = multiprocessing.Value('f', 0.0)
-    thruster_speed = 0
+    thruster_speed = 10
     missile_status = False
+    thruster_run = 17
+    main_thruster_speed = 10
     
     # RASPI PIN CONFIGURATION
-    main_thruster_speed = 10
     thruster_speed_button = 16
     shutdown_program_button = 20
     missile_button = 24
     relay_release = 25
     led = 5
 
+    # ser = serial.Serial(
+    # port='/dev/ttyS0', # Change this according to connection methods, e.g. /dev/ttyUSB0
+    # baudrate = 115200,
+    # parity=serial.PARITY_NONE,
+    # stopbits=serial.STOPBITS_ONE,
+    # bytesize=serial.EIGHTBITS,
+    # timeout=1
+    # )
+
     # PIN INITIATION
+    GPIO.setup(thruster_run, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
     GPIO.setup(thruster_speed_button, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     GPIO.setup(missile_button, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     GPIO.setup(relay_release, GPIO.OUT)
@@ -123,7 +144,6 @@ if __name__ == "__main__":
         thrusterPinConfig=[leftFrontProp, leftBackProp, rightFrontProp, rightBackProp],
         mainThrusterPinConfig=mainProp,
         allServoPinConfig=[mainFin_servo, secondaryFin_servo],
-        mainThrusterSpeed=main_thruster_speed
     )
     vision = vision_lib.hsv_detector(camera_height=240, camera_width=320, masking_enabled=False)
 
@@ -132,6 +152,7 @@ if __name__ == "__main__":
     # MULTIPROCESS=========
     # MAIN PROCESS
     runThruster_thread = threading.Thread(target=runThruster, args=(controller,))
+    runMainThruster_thread = threading.Thread(target=runMainThruster, args=(controller,))
     buttonThruster_thread = threading.Thread(target=thrusterSpeedButton, args=( ))
     runMissile_thread = threading.Thread(target=runMissile, args=())
     mainFin_servo_thread = threading.Thread(target=servoRunning, args=(controller, coord_x))
@@ -144,11 +165,13 @@ if __name__ == "__main__":
     # RUN THREAD & PROCESS
     vision_process.start()
     runThruster_thread.start()
+    runMainThruster_thread.start()
     buttonThruster_thread.start()
     runMissile_thread.start()
     mainFin_servo_thread.start()
     
     vision_process.join()
+    runMainThruster_thread.join()
     runThruster_thread.join()
     buttonThruster_thread.join()
     runMissile_thread.join()
