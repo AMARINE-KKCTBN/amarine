@@ -29,8 +29,8 @@ def runMainThruster(cnt, serial):
     global thruster_run, main_thruster_speed
     while True:
         data = serial.readline().decode('utf-8')
-        print(data)
-        if data == "HIGH":
+        print("DATA: ", data)
+        if data == "1\r\n":
             print("RUNNING THRUSTER")
             cnt.mainThruster(main_thruster_speed)
         else:
@@ -150,6 +150,7 @@ if __name__ == "__main__":
     )
     vision = vision_lib.hsv_detector(camera_height=240, camera_width=320, masking_enabled=False)
     serial = serial.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=1)
+    serial.reset_input_buffer()
 
     controller.initMainThruster()
 
