@@ -22,9 +22,9 @@ class Controller:
         sleep(0.002)
         self.thrusterPinConfig[1].throttle = percentage 
         sleep(0.002)
-        self.thrusterPinConfig[2].throttle = percentage 
+        self.thrusterPinConfig[2].throttle = percentage * -1
         sleep(0.002)
-        self.thrusterPinConfig[3].throttle = percentage * -1
+        self.thrusterPinConfig[3].throttle = percentage 
         sleep(0.002)
 
     def mainThruster(self, thruster_speed):        

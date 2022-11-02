@@ -118,15 +118,6 @@ if __name__ == "__main__":
     relay_release = 25
     led = 5
 
-    # ser = serial.Serial(
-    # port='/dev/ttyS0', # Change this according to connection methods, e.g. /dev/ttyUSB0
-    # baudrate = 115200,
-    # parity=serial.PARITY_NONE,
-    # stopbits=serial.STOPBITS_ONE,
-    # bytesize=serial.EIGHTBITS,
-    # timeout=1
-    # )
-
     # PIN INITIATION
     GPIO.setup(thruster_run, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
     GPIO.setup(thruster_speed_button, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -173,14 +164,14 @@ if __name__ == "__main__":
     runThruster_thread.start()
     runMainThruster_thread.start()
     buttonThruster_thread.start()
-    runMissile_thread.start()
+    # runMissile_thread.start()
     mainFin_servo_thread.start()
     
     vision_process.join()
     runMainThruster_thread.join()
     runThruster_thread.join()
     buttonThruster_thread.join()
-    runMissile_thread.join()
+    # runMissile_thread.join()
     mainFin_servo_thread.join()
 
     
