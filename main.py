@@ -32,15 +32,15 @@ def runMainThruster(cnt, serial):
         data = serial.readline().decode('utf-8')
         print("DATA: ", data)
         if serial.in_waiting > 0:
-            if count < 5 or data == "0\r\n":
-                continue
-            if data == "1\r\n":
-                print("RUNNING THRUSTER")
-                cnt.mainThruster(main_thruster_speed)
-                count=5
+            if count < 5 and data == "0\r\n":
+                print("INIT...")
             else:
-                print("STOP THRUSTER")
-                cnt.mainThruster(0)
+                if data == "1\r\n":
+                    print("RUNNING THRUSTER")
+                    cnt.mainThruster(main_thruster_speed)
+                else:
+                    print("STOP THRUSTER")
+                    cnt.mainThruster(0)
                 count=5
             count+=1
             sleep(0.1)
