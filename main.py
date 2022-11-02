@@ -35,8 +35,9 @@ def runMainThruster(cnt, serial):
             print("COUNT KURANG DARI 5")
         if serial.in_waiting > 0:
             if count < 5 and data == "0\r\n":
-                print("INIT...")
+                print("INIT...", count)
             else:
+                print("COUNT...", count)
                 if data == "1\r\n":
                     print("RUNNING THRUSTER")
                     cnt.mainThruster(main_thruster_speed)
@@ -44,7 +45,6 @@ def runMainThruster(cnt, serial):
                     print("STOP THRUSTER")
                     cnt.mainThruster(0)
                 count=5
-            print("COUNT...", count)
             count+=1
             sleep(0.1)
 
