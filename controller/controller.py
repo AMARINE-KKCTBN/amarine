@@ -10,12 +10,11 @@ class Controller:
         thrusterPinConfig,
         mainThrusterPinConfig,
         allServoPinConfig,
-        mainThrusterSpeed
     ) -> None:
         self.thrusterPinConfig = thrusterPinConfig
         self.mainThrusterPinConfig = mainThrusterPinConfig
         self.allServoPinConfig = allServoPinConfig
-        self.mainThrusterSpeed = mainThrusterSpeed
+        # self.mainThrusterSpeed = mainThrusterSpeed
         
     def staticThruster(self, percentage):
         percentage /= 100
@@ -28,8 +27,8 @@ class Controller:
         self.thrusterPinConfig[3].throttle = percentage * -1
         sleep(0.002)
 
-    def mainThruster(self):        
-        self.mainThrusterPinConfig.throttle = self.mainThrusterSpeed / 100
+    def mainThruster(self, thruster_speed):        
+        self.mainThrusterPinConfig.throttle = thruster_speed / 100
         sleep(0.002)
 
     def initMainThruster(self):        

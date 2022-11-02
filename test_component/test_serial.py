@@ -1,10 +1,9 @@
+#!/usr/bin/env python3
 import serial
-
-try:
-    serial = serial.Serial(port="/dev/ttyUSB0", baudrate=9600, timeout=1)
+if __name__ == '__main__':
+    ser = serial.Serial('/dev/ttyS0', 9600, timeout=1)
+    ser.reset_input_buffer()
     while True:
-        # print(str(serial.readline().decode("UTF-8")))
-        data = serial.readline().decode("UTF-8")
-        print(data)
-except:
-    print("CANNOT CONNECT TO SERIAL PORT")
+        if ser.in_waiting > 0:
+            line = ser.readline().decode('utf-8').rstrip()
+            print(line)
