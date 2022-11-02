@@ -28,10 +28,10 @@ def runThruster(cnt):
 def runMainThruster(cnt, serial):
     global thruster_run, main_thruster_speed
     while True:
-        data = serial.readline().decode('utf-8')
-        print("DATA: ", data)
         if serial.in_waiting > 0:
-            if data == "1\r\n":
+            data = serial.readline().decode('utf-8')
+            print("DATA: ", data)
+            if data == "0\r\n":
                 print("RUNNING THRUSTER")
                 cnt.mainThruster(main_thruster_speed)
             else:
@@ -149,7 +149,7 @@ if __name__ == "__main__":
     # MULTIPROCESS=========
     # MAIN PROCESS
     runThruster_thread = threading.Thread(target=runThruster, args=(controller,))
-    runMainThruster_thread = threading.Thread(target=runMainThruster, args=(controller, serial))
+    runMainThruster_thread = multiprocessing.Process(target=runMainThruster, args=(controller, serial))
     buttonThruster_thread = threading.Thread(target=thrusterSpeedButton, args=( ))
     runMissile_thread = threading.Thread(target=runMissile, args=())
     mainFin_servo_thread = threading.Thread(target=servoRunning, args=(controller, coord_x))
