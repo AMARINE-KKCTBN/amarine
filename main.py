@@ -6,6 +6,7 @@ from adafruit_servokit import ServoKit
 from controller import controller as cntrl
 from vision import vision_lib
 import serial
+from concurrent.futures import ThreadPoolExecutor
 
 def thrusterSpeedButton():
     global thruster_speed, thruster_speed_button
@@ -141,18 +142,25 @@ if __name__ == "__main__":
         allServoPinConfig=[mainFin_servo, secondaryFin_servo],
     )
     vision = vision_lib.hsv_detector(camera_height=240, camera_width=320, masking_enabled=False)
-    serial = serial.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=1)
-    serial.reset_input_buffer()
+    ser = serial.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=1)
+    ser.reset_input_buffer()
 
     controller.initMainThruster()
 
     # MULTIPROCESS=========
     # MAIN PROCESS
-    runThruster_thread = threading.Thread(target=runThruster, args=(controller,))
-    runMainThruster_thread = multiprocessing.Process(target=runMainThruster, args=(controller, serial))
-    buttonThruster_thread = threading.Thread(target=thrusterSpeedButton, args=( ))
-    runMissile_thread = threading.Thread(target=runMissile, args=())
-    mainFin_servo_thread = threading.Thread(target=servoRunning, args=(controller, coord_x))
+
+    with ThreadPoolExecutor() as executor:
+        executor.submit(runMainThruster, controller)
+        executor.submit(runMainThruster, controller, ser)
+        executor.submit(thrusterSpeedButton)
+        executor.submit(servoRunning, controller, coord_x)
+
+    # runThruster_thread = threading.Thread(target=runThruster, args=(controller,))
+    # runMainThruster_thread = multiprocessing.Process(target=runMainThruster, args=(controller, serial))
+    # buttonThruster_thread = threading.Thread(target=thrusterSpeedButton, args=( ))
+    # # runMissile_thread = threading.Thread(target=runMissile, args=())
+    # mainFin_servo_thread = threading.Thread(target=servoRunning, args=(controller, coord_x))
 
     # VISION PROCESS
     vision_process = multiprocessing.Process(target=objectDetection, args=(vision, coord_x))
@@ -161,17 +169,17 @@ if __name__ == "__main__":
 
     # RUN THREAD & PROCESS
     vision_process.start()
-    runThruster_thread.start()
-    runMainThruster_thread.start()
-    buttonThruster_thread.start()
-    # runMissile_thread.start()
-    mainFin_servo_thread.start()
+    # runThruster_thread.start()
+    # runMainThruster_thread.start()
+    # buttonThruster_thread.start()
+    # # runMissile_thread.start()
+    # mainFin_servo_thread.start()
     
     vision_process.join()
-    runMainThruster_thread.join()
-    runThruster_thread.join()
-    buttonThruster_thread.join()
-    # runMissile_thread.join()
-    mainFin_servo_thread.join()
+    # runMainThruster_thread.join()
+    # runThruster_thread.join()
+    # buttonThruster_thread.join()
+    # # runMissile_thread.join()
+    # mainFin_servo_thread.join()
 
     
