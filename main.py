@@ -42,6 +42,7 @@ def runMainThruster(cnt, serial):
                     print("STOP THRUSTER")
                     cnt.mainThruster(0)
                 count=5
+            print("COUNT...", count)
             count+=1
             sleep(0.1)
 
