@@ -31,7 +31,7 @@ def runMainThruster(cnt, serial):
         data = serial.readline().decode('utf-8')
         print("DATA: ", data)
         if serial.in_waiting > 0:
-            if data == "1\r\n":
+            if data == "0\r\n":
                 print("RUNNING THRUSTER")
                 cnt.mainThruster(main_thruster_speed)
             else:
