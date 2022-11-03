@@ -1,8 +1,5 @@
 import RPi.GPIO as GPIO
 from time import sleep
-from adafruit_servokit import (
-    ServoKit,
-)  # https://circuitpython.readthedocs.io/projects/servokit/en/latest/
 
 class Controller:
     def __init__(
@@ -14,7 +11,6 @@ class Controller:
         self.thrusterPinConfig = thrusterPinConfig
         self.mainThrusterPinConfig = mainThrusterPinConfig
         self.allServoPinConfig = allServoPinConfig
-        # self.mainThrusterSpeed = mainThrusterSpeed
         
     def staticThruster(self, percentage):
         percentage /= 100

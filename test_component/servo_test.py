@@ -1,5 +1,6 @@
 from time import sleep
 from adafruit_servokit import ServoKit
+import serial
 
 pca = ServoKit(channels=16)
 mainFin_servo = pca.servo[6]
@@ -13,4 +14,6 @@ while True:
     mainFin_servo.angle = 90
     sleep(0.1)
     mainFin_servo.angle = 150
+
+ser = serial.Serial(port='/dev/ttUSB0', baudrate=9600, timeout=1)
 
