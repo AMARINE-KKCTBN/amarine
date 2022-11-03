@@ -150,35 +150,17 @@ if __name__ == "__main__":
     # MULTIPROCESS=========
     # MAIN PROCESS
 
+    with ThreadPoolExecutor(10) as executor:
+        executor.submit(runThruster, controller)
+        executor.submit(runMainThruster, controller, ser)
+        executor.submit(thrusterSpeedButton)
+        executor.submit(servoRunning, controller, coord_x)
 
-    runThruster_thread = multiprocessing.Process(target=runThruster, args=(controller,))
-    buttonThruster_thread = multiprocessing.Process(target=thrusterSpeedButton, args=( ))
-    mainFin_servo_thread = multiprocessing.Process(target=servoRunning, args=(controller, coord_x))
+    # runThruster_thread = threading.Thread(target=runThruster, args=(controller,))
+    # runMainThruster_thread = multiprocessing.Process(target=runMainThruster, args=(controller, serial))
+    # buttonThruster_thread = threading.Thread(target=thrusterSpeedButton, args=( ))
     # # runMissile_thread = threading.Thread(target=runMissile, args=())
-    # def threadPool():
-    #     threads = [runThruster_thread, buttonThruster_thread, mainFin_servo_thread]
-    #     for thread in threads:
-    #         thread.start()
-    #     for thread in threads:
-    #         thread.join()
-
-    # def runMainThrusterThread():
-    #     global ser, controller
-    #     # runMainThruster_thread = multiprocessing.Process(target=runMainThruster, args=(controller, serial))
-    runMainThruster_thread = threading.Thread(target=runMainThruster, args=(controller, ser))
-    #     runMainThruster_thread.start()
-    #     runMainThruster_thread.join()
-
-    # with multiprocessing.Pool() as multiprocess_executor:
-    #     multiprocess_executor.apply(threadPool)
-    #     multiprocess_executor.apply(runMainThruster, controller, ser)
-        # multiprocess_executor.apply(objectDetection, vision, coord_x)
-        # executor.submit(runThruster, controller)
-        # executor.submit(runMainThruster, controller, ser)
-        # executor.submit(thrusterSpeedButton)
-        # executor.submit(servoRunning, controller, coord_x)
-
-    # threads.append()
+    # mainFin_servo_thread = threading.Thread(target=servoRunning, args=(controller, coord_x))
 
     # VISION PROCESS
     vision_process = multiprocessing.Process(target=objectDetection, args=(vision, coord_x))
@@ -187,17 +169,17 @@ if __name__ == "__main__":
 
     # RUN THREAD & PROCESS
     vision_process.start()
-    runThruster_thread.start()
-    runMainThruster_thread.start()
-    buttonThruster_thread.start()
+    # runThruster_thread.start()
+    # runMainThruster_thread.start()
+    # buttonThruster_thread.start()
     # # runMissile_thread.start()
-    mainFin_servo_thread.start()
+    # mainFin_servo_thread.start()
     
     vision_process.join()
-    runMainThruster_thread.join()
-    runThruster_thread.join()
-    buttonThruster_thread.join()
+    # runMainThruster_thread.join()
+    # runThruster_thread.join()
+    # buttonThruster_thread.join()
     # # runMissile_thread.join()
-    mainFin_servo_thread.join()
+    # mainFin_servo_thread.join()
 
     
