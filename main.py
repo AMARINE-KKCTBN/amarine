@@ -43,7 +43,8 @@ def runMainThruster(cnt, serial, isRunning):
                 print("DATA RECEIVE: ", data)
                 if data == "0\r\n":
                     print("RUNNING THRUSTER")
-                    cnt.mainThruster(main_thruster_speed)
+                    # cnt.mainThruster(main_thruster_speed)
+                    cnt.mainThruster(10)
                 else:
                     print("STOP THRUSTER")
                     cnt.mainThruster(0)
