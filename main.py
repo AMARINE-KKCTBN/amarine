@@ -12,7 +12,7 @@ from ctypes import c_bool, c_float, c_int
 def thrusterSpeedButton(thruster_speed, isRunning):
     global thruster_speed_button
     while True:
-        if isRunning.value:
+        if isRunning[0]:
             if GPIO.input(thruster_speed_button) == GPIO.LOW:
                 if thruster_speed.value >= 30:
                     thruster_speed.value = 0
@@ -29,7 +29,7 @@ def thrusterSpeedButton(thruster_speed, isRunning):
 
 def runThruster(cnt, isRunning, thruster_speed):
     while True:
-        if isRunning.value:
+        if isRunning[0]:
             cnt.staticThruster(thruster_speed.value)
         else:
             continue
@@ -37,7 +37,7 @@ def runThruster(cnt, isRunning, thruster_speed):
 def runMainThruster(cnt, serial, isRunning):
     global main_thruster_speed
     while True:
-        if isRunning.value:
+        if isRunning[0]:
             if serial.in_waiting > 0:
                 data = serial.readline().decode('utf-8')
                 print("DATA RECEIVE: ", data)
@@ -60,7 +60,7 @@ def runMainThruster(cnt, serial, isRunning):
 def servoRunning(cnt, val, isRunning):
     coord_x = 0
     while True:
-        if isRunning.value:
+        if isRunning[0]:
             coord_x = val.value
             if coord_x >= -0.200 and coord_x <= 0.200:
                 cnt.forward()
@@ -79,8 +79,8 @@ def servoRunning(cnt, val, isRunning):
 def objectDetection(vision, val, isRunning):
     offset_x = 0.5
     while True:
-        print("PASSED DATA", isRunning.value)
-        if isRunning.value:
+        print("PASSED DATA", isRunning[0])
+        if isRunning[0]:
             vision.detect_circle_object()
             coord_x, coord_y, coord_z = vision.get_circle_coord()
             if coord_x < 0:
@@ -93,6 +93,7 @@ def objectDetection(vision, val, isRunning):
             # if not vision.show_image():
             #     break 
         else:
+            print("STOPPING PROGRAM")
             continue
 
 def shutdownProgram(isRunning):
@@ -101,7 +102,7 @@ def shutdownProgram(isRunning):
         if GPIO.input(shutdown_program_button) == GPIO.LOW:
             isRunning.value = not isRunning.value
         else:
-            if isRunning.value:
+            if isRunning[0]:
                 GPIO.output(led, GPIO.HIGH)
                 sleep(0.1)
                 GPIO.output(led, GPIO.LOW)
@@ -114,7 +115,9 @@ if __name__ == "__main__":
     pca = ServoKit(channels=16)
 
     # INIT VARIABLE
-    isRunning = multiprocessing.Value('i', 0)
+    with multiprocessing.Manager() as manager:
+        isRunning = manager.list([0])
+    # isRunning = multiprocessing.Value('i', 0)
     coord_x = multiprocessing.Value('f', 0.0)
     thruster_speed = multiprocessing.Value('i', 0)
     # missile_status = False
