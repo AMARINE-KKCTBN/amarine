@@ -1,5 +1,5 @@
-import threading
-import multiprocessing
+from threading import Thread
+from multiprocessing import Process, Value, Queue
 from time import sleep
 import RPi.GPIO as GPIO
 from adafruit_servokit import ServoKit
@@ -7,67 +7,90 @@ from controller import controller as cntrl
 from vision import vision_lib
 import serial
 from ctypes import c_bool, c_float, c_int
-# from concurrent.futures import ThreadPoolExecutor
 
-def thrusterSpeedButton(thruster_speed, isRunning):
-    global thruster_speed_button
+# runFourThruster
+# runMainThruster
+# runVision
+# runServo
+# runSerCommunication
+
+def runFourThruster(cnt, isRunning):
+    last_value = 0
+    max_speed = 15
+    min_speed = 1
     while True:
-        if isRunning[0]:
-            if GPIO.input(thruster_speed_button) == GPIO.LOW:
-                if thruster_speed.value >= 30:
-                    thruster_speed.value = 0
-                    sleep(0.99)
-                else:
-                    last_thruster = thruster_speed.value
-                    for i in range (1,11):
-                        thruster_speed.value = last_thruster + i
-                        sleep(0.1)
-                sleep(0.25)
+        if isRunning.value == 1:
+            if last_value != isRunning.value:
+                for speed in range (min_speed, max_speed+1):
+                    cnt.staticThruster(speed)
+                    sleep(0.1)
+                print("DYNAMIC 1====================================")
+            else:
+                cnt.staticThruster(max_speed)
+                print("STATIC 1")
         else:
-            thruster_speed.value = 0
-            continue
+            if last_value != isRunning.value:
+                for speed in range(max_speed, -1, -1):
+                    cnt.staticThruster(speed)
+                    sleep(0.1)
+                print("DYNAMIC 0===================================")
+            else:
+                print("STATIC 0")
+                cnt.staticThruster(0)
+                print("Stopping 4 Thruster...")
 
-def runThruster(cnt, isRunning, thruster_speed):
+        print("PASSED VALUE", isRunning.value)
+        last_value = isRunning.value
+        sleep(0.5)
+
+def runMainThruster(cnt, isRunning):
+    last_value = 0
+    max_speed = 10
+    min_speed = 1
     while True:
-#<<<<<<< HEAD
-#        if isRunning.value:
-#            cnt.staticThruster(0)
-#=======
-        if isRunning[0]:
-            cnt.staticThruster(thruster_speed.value)
-#>>>>>>> 079fa2ff1f82f16863460924d7160f6cbbd89f2b
+        if isRunning.value == 1:
+            if last_value != isRunning.value:
+                for speed in range (min_speed, max_speed+1):
+                    cnt.mainThruster(speed)
+                    sleep(0.1)
+            else:
+                cnt.mainThruster(max_speed)
         else:
-            continue
+            if last_value != isRunning.value:
+                for speed in range(max_speed, -1, -1):
+                    cnt.mainThruster(speed)
+                    sleep(0.1)
+            else:
+                cnt.mainThruster(0)
+                print("Stopping Main Thruster...")
+        print("PASSED VALUE", isRunning.value)
+        last_value = isRunning.value
+        sleep(0.5)
 
-def runMainThruster(cnt, serial, isRunning):
-    global main_thruster_speed
+def runSerialCommunication(serial, isRunning):
     while True:
-        if isRunning[0]:
+        try:
             if serial.in_waiting > 0:
                 data = serial.readline().decode('utf-8')
                 print("DATA RECEIVE: ", data)
                 if data == "0\r\n":
+                    isRunning.value = 1
                     print("RUNNING THRUSTER")
-                    # cnt.mainThruster(main_thruster_speed)
-                    cnt.mainThruster(10)
                 else:
+                    isRunning.value = 0                    
                     print("STOP THRUSTER")
-                    cnt.mainThruster(0)
-                    cnt.staticThruster(0)
-                sleep(0.125)
             else: 
-                # serial.open()
-                continue
-        else:
-            # serial.close()
-            cnt.mainThruster(0)
-            continue
+                print("Initiation of serial communication...")
 
-def servoRunning(cnt, val, isRunning):
+        except Exception as exception:
+            print("There's problem with serial communication!", exception)
+        sleep(0.5)
+
+def runServo(cnt, cx, isRunning):
     coord_x = 0
     while True:
-        if isRunning[0]:
-            coord_x = val.value
+        if isRunning.value == 1:
+            coord_x = cx.value
             if coord_x >= -0.200 and coord_x <= 0.200:
                 cnt.forward()
                 print("FORWARD")
@@ -77,16 +100,15 @@ def servoRunning(cnt, val, isRunning):
             else:
                 cnt.left()            
                 print("LEFT")
-            sleep(0.1)
         else:
             cnt.forward()
-            continue
+            print("Stopping Servo...")
+        sleep(0.5)
 
-def objectDetection(vision, val, isRunning):
+def runVision(vision, cx, isRunning):
     offset_x = 0.5
     while True:
-        print("PASSED DATA", isRunning[0])
-        if isRunning[0]:
+        if isRunning.value == 1:
             vision.detect_circle_object()
             coord_x, coord_y, coord_z = vision.get_circle_coord()
             if coord_x < 0:
@@ -94,67 +116,23 @@ def objectDetection(vision, val, isRunning):
             else:
                 coord_x -= offset_x
             print("coord(x,y,z): " + str(vision.get_circle_coord()))
-            val.value = coord_x
-            sleep(0.1)
+            cx.value = coord_x
             # if not vision.show_image():
             #     break 
         else:
-            print("STOPPING PROGRAM")
-            continue
-
-def shutdownProgram(isRunning):
-    global shutdown_program_button, led
-    while True:
-        if GPIO.input(shutdown_program_button) == GPIO.LOW:
-            isRunning.value = not isRunning.value
-        else:
-            if isRunning[0]:
-                GPIO.output(led, GPIO.HIGH)
-                sleep(0.1)
-                GPIO.output(led, GPIO.LOW)
-                sleep(0.1)
-            else:
-                GPIO.output(led, GPIO.LOW)   
+            print("Stopping Vision...")
+        sleep(0.5)
 
 if __name__ == "__main__":
 
     pca = ServoKit(channels=16)
 
-    # INIT VARIABLE
-#<<<<<<< HEAD
-#<<<<<<< HEAD
-#    isRunning = multiprocessing.Value(c_bool, True)
-#    coord_x = multiprocessing.Value(c_float, 0.0)
-#    thruster_speed = multiprocessing.Value(c_int, 20)
-#=======
-#    isRunning = multiprocessing.Value('i', 0)
-#=======
-    with multiprocessing.Manager() as manager:
-        isRunning = manager.list([0])
-    # isRunning = multiprocessing.Value('i', 0)
-#>>>>>>> 079fa2ff1f82f16863460924d7160f6cbbd89f2b
-    coord_x = multiprocessing.Value('f', 0.0)
-    thruster_speed = multiprocessing.Value('i', 0)
-#>>>>>>> 07850f065c57e2000416a7bbdab6ed92d130ef19
-    # missile_status = False
+    # MULTIPROCESS SHARED VARIABEL/VALUE
+    isRunning = Value('i', 0)
+    coord_x = Value('f', 0.0)
+
     thruster_run = 17
     main_thruster_speed = 10
-    
-    # RASPI PIN CONFIGURATION
-    thruster_speed_button = 16
-    shutdown_program_button = 20
-    # missile_button = 24
-    # relay_release = 25
-    led = 5
-
-    # PIN INITIATION
-    # GPIO.setup(thruster_run, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-    GPIO.setup(thruster_speed_button, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    GPIO.setup(shutdown_program_button, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    GPIO.setup(led, GPIO.OUT)
-    GPIO.output(led, GPIO.LOW)
-    # GPIO.setup(relay_release, GPIO.OUT)
-    # GPIO.setup(led, GPIO.OUT)
 
     # I2C PIN CONFIGURATION
     leftFrontProp = pca.continuous_servo[0]
@@ -173,18 +151,45 @@ if __name__ == "__main__":
     )
     try:
         vision = vision_lib.hsv_detector(camera_height=240, camera_width=320, masking_enabled=False)
-        ser = serial.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=1)
+        ser = serial.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=5)
         ser.reset_input_buffer()
+
         controller.initMainThruster()
+
+        runFourThruster_process = Process(target=runFourThruster ,args=(controller, isRunning))
+        runMainThruster_process = Process(target=runMainThruster ,args=(controller, isRunning))
+        runVision_process = Process(target=runVision, args=(controller, coord_x, isRunning))
+        runServo_process = Process(target=runServo, args=(controller, coord_x, isRunning))
+        runSerialCommunication_thread = Thread(target=runSerialCommunication, args=(serial, isRunning))
+        
+        runMainThruster_process.start()
+        runFourThruster_process.start()
+        runVision_process.start()
+        runServo_process.start()
+        runSerialCommunication_thread.start()
+
+        runMainThruster_process.join()
+        runFourThruster_process.join()
+        runVision_process.join()
+        runServo_process.join()
+        runSerialCommunication_thread.join()
+
+        # runMainThruster_process = threading.Thread(target=runMainThruster, args=(controller, ser, isRunning))
+        # thrusterRun_process.start()
+        # runMainThruster_process.start()
+        # thrusterRun_process.join()
+        # runMainThruster_process.join()
 
         # MULTIPROCESS=========
         # MAIN PROCESS
 
-        shutdown_program_thread = multiprocessing.Process(target=shutdownProgram, args=(isRunning,))
-        runThruster_thread = multiprocessing.Process(target=runThruster, args=(controller, isRunning, thruster_speed))
-        buttonThruster_thread = multiprocessing.Process(target=thrusterSpeedButton, args=(thruster_speed, isRunning, ))
-        mainFin_servo_thread = multiprocessing.Process(target=servoRunning, args=(controller, coord_x, isRunning))
-        runMainThruster_thread = threading.Thread(target=runMainThruster, args=(controller, ser, isRunning))
+        # shutdown_program_thread = multiprocessing.Process(target=shutdownProgram, args=(isRunning,))
+        # buttonThruster_thread = multiprocessing.Process(target=thrusterSpeedButton, args=(thruster_speed, isRunning, ))
+        # mainFin_servo_thread = multiprocessing.Process(target=servoRunning, args=(controller, coord_x, isRunning))
+        
+        # vision_process = multiprocessing.Process(target=objectDetection, args=(vision, coord_x, isRunning))
+        
+        # runMainThruster_thread = threading.Thread(target=runMainThruster, args=(controller, ser, isRunning))
         # # runMissile_thread = threading.Thread(target=runMissile, args=())
         # def threadPool():
         #     threads = [runThruster_thread, buttonThruster_thread, mainFin_servo_thread]
@@ -211,28 +216,29 @@ if __name__ == "__main__":
         # threads.append()
 
         # VISION PROCESS
-        vision_process = multiprocessing.Process(target=objectDetection, args=(vision, coord_x, isRunning))
 
         # MULTIPROCESS=========
 
         # RUN THREAD & PROCESS
-        vision_process.start()
-        runThruster_thread.start()
-        runMainThruster_thread.start()
-        buttonThruster_thread.start()
-        mainFin_servo_thread.start()
-        shutdown_program_thread.start()
+        # vision_process.start()
+        # runThruster_thread.start()
+        # runMainThruster_thread.start()
+        # buttonThruster_thread.start()
+        # mainFin_servo_thread.start()
+        # shutdown_program_thread.start()
         
-        vision_process.join()
-        runMainThruster_thread.join()
-        runThruster_thread.join()
-        buttonThruster_thread.join()
-        shutdown_program_thread.join()
-        mainFin_servo_thread.join()
+        # vision_process.join()
+        # runMainThruster_thread.join()
+        # runThruster_thread.join()
+        # buttonThruster_thread.join()
+        # shutdown_program_thread.join()
+        # mainFin_servo_thread.join()
 
     except Exception as ex:
         print("CANNOT OPEN CAMERA OR SERIAL PORT!")
         print(ex)
+        ser.close()
+        raise SystemExit
 
     
     
