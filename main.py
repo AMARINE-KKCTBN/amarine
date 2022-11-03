@@ -156,62 +156,63 @@ if __name__ == "__main__":
         vision = vision_lib.hsv_detector(camera_height=240, camera_width=320, masking_enabled=False)
         ser = serial.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=1)
         ser.reset_input_buffer()
+        controller.initMainThruster()
+
+        # MULTIPROCESS=========
+        # MAIN PROCESS
+
+        shutdown_program_thread = multiprocessing.Process(target=shutdownProgram, args=(isRunning,))
+        runThruster_thread = multiprocessing.Process(target=runThruster, args=(controller, isRunning, thruster_speed))
+        buttonThruster_thread = multiprocessing.Process(target=thrusterSpeedButton, args=(thruster_speed, isRunning, ))
+        mainFin_servo_thread = multiprocessing.Process(target=servoRunning, args=(controller, coord_x, isRunning))
+        runMainThruster_thread = threading.Thread(target=runMainThruster, args=(controller, ser, isRunning))
+        # # runMissile_thread = threading.Thread(target=runMissile, args=())
+        # def threadPool():
+        #     threads = [runThruster_thread, buttonThruster_thread, mainFin_servo_thread]
+        #     for thread in threads:
+        #         thread.start()
+        #     for thread in threads:
+        #         thread.join()
+
+        # def runMainThrusterThread():
+        #     global ser, controller
+        #     # runMainThruster_thread = multiprocessing.Process(target=runMainThruster, args=(controller, serial))
+        #     runMainThruster_thread.start()
+        #     runMainThruster_thread.join()
+
+        # with multiprocessing.Pool() as multiprocess_executor:
+        #     multiprocess_executor.apply(threadPool)
+        #     multiprocess_executor.apply(runMainThruster, controller, ser)
+            # multiprocess_executor.apply(objectDetection, vision, coord_x)
+            # executor.submit(runThruster, controller)
+            # executor.submit(runMainThruster, controller, ser)
+            # executor.submit(thrusterSpeedButton)
+            # executor.submit(servoRunning, controller, coord_x)
+
+        # threads.append()
+
+        # VISION PROCESS
+        vision_process = multiprocessing.Process(target=objectDetection, args=(vision, coord_x, isRunning))
+
+        # MULTIPROCESS=========
+
+        # RUN THREAD & PROCESS
+        vision_process.start()
+        runThruster_thread.start()
+        runMainThruster_thread.start()
+        buttonThruster_thread.start()
+        mainFin_servo_thread.start()
+        shutdown_program_thread.start()
+        
+        vision_process.join()
+        runMainThruster_thread.join()
+        runThruster_thread.join()
+        buttonThruster_thread.join()
+        shutdown_program_thread.join()
+        mainFin_servo_thread.join()
+
     except:
         print("CANNOT OPEN CAMERA OR SERIAL PORT!")
 
-    controller.initMainThruster()
-
-    # MULTIPROCESS=========
-    # MAIN PROCESS
-
-    shutdown_program_thread = multiprocessing.Process(target=shutdownProgram, args=(isRunning,))
-    runThruster_thread = multiprocessing.Process(target=runThruster, args=(controller, isRunning, thruster_speed))
-    buttonThruster_thread = multiprocessing.Process(target=thrusterSpeedButton, args=(thruster_speed, isRunning, ))
-    mainFin_servo_thread = multiprocessing.Process(target=servoRunning, args=(controller, coord_x, isRunning))
-    # # runMissile_thread = threading.Thread(target=runMissile, args=())
-    # def threadPool():
-    #     threads = [runThruster_thread, buttonThruster_thread, mainFin_servo_thread]
-    #     for thread in threads:
-    #         thread.start()
-    #     for thread in threads:
-    #         thread.join()
-
-    # def runMainThrusterThread():
-    #     global ser, controller
-    #     # runMainThruster_thread = multiprocessing.Process(target=runMainThruster, args=(controller, serial))
-    runMainThruster_thread = threading.Thread(target=runMainThruster, args=(controller, ser, isRunning))
-    #     runMainThruster_thread.start()
-    #     runMainThruster_thread.join()
-
-    # with multiprocessing.Pool() as multiprocess_executor:
-    #     multiprocess_executor.apply(threadPool)
-    #     multiprocess_executor.apply(runMainThruster, controller, ser)
-        # multiprocess_executor.apply(objectDetection, vision, coord_x)
-        # executor.submit(runThruster, controller)
-        # executor.submit(runMainThruster, controller, ser)
-        # executor.submit(thrusterSpeedButton)
-        # executor.submit(servoRunning, controller, coord_x)
-
-    # threads.append()
-
-    # VISION PROCESS
-    vision_process = multiprocessing.Process(target=objectDetection, args=(vision, coord_x, isRunning))
-
-    # MULTIPROCESS=========
-
-    # RUN THREAD & PROCESS
-    vision_process.start()
-    runThruster_thread.start()
-    runMainThruster_thread.start()
-    buttonThruster_thread.start()
-    mainFin_servo_thread.start()
-    shutdown_program_thread.start()
     
-    vision_process.join()
-    runMainThruster_thread.join()
-    runThruster_thread.join()
-    buttonThruster_thread.join()
-    shutdown_program_thread.join()
-    mainFin_servo_thread.join()
-
     
