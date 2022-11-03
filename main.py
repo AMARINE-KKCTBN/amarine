@@ -210,8 +210,9 @@ if __name__ == "__main__":
         shutdown_program_thread.join()
         mainFin_servo_thread.join()
 
-    except:
+    except Exception as ex:
         print("CANNOT OPEN CAMERA OR SERIAL PORT!")
+        print(ex)
 
     
     
