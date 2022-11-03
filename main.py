@@ -79,6 +79,7 @@ def servoRunning(cnt, val, isRunning):
 def objectDetection(vision, val, isRunning):
     offset_x = 0.5
     while True:
+        print("PASSED DATA", isRunning.value)
         if isRunning.value:
             vision.detect_circle_object()
             coord_x, coord_y, coord_z = vision.get_circle_coord()
@@ -113,9 +114,9 @@ if __name__ == "__main__":
     pca = ServoKit(channels=16)
 
     # INIT VARIABLE
-    isRunning = multiprocessing.Value(c_bool, False)
-    coord_x = multiprocessing.Value(c_float, 0.0)
-    thruster_speed = multiprocessing.Value(c_int, 0)
+    isRunning = multiprocessing.Value('i', 0)
+    coord_x = multiprocessing.Value('f', 0.0)
+    thruster_speed = multiprocessing.Value('i', 0)
     # missile_status = False
     thruster_run = 17
     main_thruster_speed = 10
