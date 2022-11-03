@@ -4,8 +4,11 @@ from time import sleep
 # import RPi.GPIO as GPIO
 # from adafruit_servokit import ServoKit
 # from controller import controller as cntrl
-from vision import vision_lib
+import os
+import sys
 
+sys.path.append(os.getcwd())
+from vision import vision_lib
 
 def objectDetection():
     coord_x = 0
@@ -21,6 +24,7 @@ def objectDetection():
         # print("coord: " + str(round(coord_x, 3)))
 
 if __name__ == "__main__":
+    print("SUCESS")
     objectDetection()
     # vision.detect_circle_object()
 

@@ -1,5 +1,6 @@
-from ast import Not
-import vision.vision_lib as vision_lib
+import sys, os
+sys.path.append(os.getcwd())
+from vision import vision_lib
 
 offset_x = 0.5
 vision = vision_lib.hsv_detector()
