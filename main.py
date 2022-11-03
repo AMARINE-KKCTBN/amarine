@@ -35,7 +35,7 @@ def runThruster(cnt, isRunning, thruster_speed):
             continue
 
 def runMainThruster(cnt, serial, isRunning):
-    global thruster_run, main_thruster_speed
+    global main_thruster_speed
     while True:
         if isRunning.value:
             if serial.in_waiting > 0:
@@ -43,7 +43,8 @@ def runMainThruster(cnt, serial, isRunning):
                 print("DATA RECEIVE: ", data)
                 if data == "0\r\n":
                     print("RUNNING THRUSTER")
-                    cnt.mainThruster(main_thruster_speed)
+                    # cnt.mainThruster(main_thruster_speed)
+                    cnt.mainThruster(10)
                 else:
                     print("STOP THRUSTER")
                     cnt.mainThruster(0)

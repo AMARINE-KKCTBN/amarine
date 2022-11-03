@@ -35,10 +35,10 @@ transform_empty = {
     "field_canny_param2" : 150,
     "field_morph_kernel" : 7,
 }
-object_hsv_path = 'vision/object_hsv.json'
-field_hsv_path = 'vision/field_hsv.json'
-circle_params_path = 'vision/circle_params.json'
-transform_params_path = 'vision/transform_params.json'
+object_hsv_path = 'object_hsv.json'
+field_hsv_path = 'field_hsv.json'
+circle_params_path = 'circle_params.json'
+transform_params_path = 'transform_params.json'
 
 if path.exists(object_hsv_path):
     with open(object_hsv_path, 'r') as openfile:
@@ -118,7 +118,7 @@ cv2.createTrackbar('Field morph kernel','transform',transform_params['field_morp
 # if k == ord("s"):
 #     cv2.imwrite("starbucks.jpg", img)
 
-camera = cv2.VideoCapture(0)
+camera = cv2.VideoCapture(2)
 camera.set(cv2.CAP_PROP_FPS, 30)
 camera.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
 camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
@@ -312,11 +312,11 @@ while(1):
     # cv2.imshow("Field",output_field)
     # cv2.imshow("Contours Original",output_contours_original)
     # cv2.imshow("Contours Approx",output_contours_approx)
-    cv2.imshow("Contours Hull",output_contours_hull)
+    # cv2.imshow("Contours Hull",output_contours_hull)
     # cv2.imshow("Enclosed Contours Hull",enclosed_mask)
-    cv2.imshow("Output Enclosed Contours Hull",output_enclosed_mask)
+    # cv2.imshow("Output Enclosed Contours Hull",output_enclosed_mask)
     cv2.imshow("Canny", object_edges)
-    cv2.imshow("Field Canny", field_edges)
+    # cv2.imshow("Field Canny", field_edges)
     # cv2.imshow("Original", img)
     # cv2.imshow("Ball detect ",circles)
 
