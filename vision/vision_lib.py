@@ -1,10 +1,9 @@
 import cv2
 import numpy as np
 import json
-import math
 
 class hsv_detector:
-    def __init__(self, camera_height = 320, camera_width = 240, stabilizer_enabled = False, masking_enabled = False, record_enabled = False, visualization_enabled = False, vertical_limiter = False, horizontal_limiter = False):
+    def __init__(self, camera_height = 320, camera_width = 240, radius_limiter = False, stabilizer_enabled = False, masking_enabled = False, record_enabled = False, visualization_enabled = False, vertical_limiter = False, horizontal_limiter = False):
         self.object_hsv_path = 'vision/object_hsv.json'
         self.field_hsv_path = 'vision/field_hsv.json'
         self.circle_params_path = 'vision/circle_params.json'
@@ -28,12 +27,16 @@ class hsv_detector:
         
         self.vertical_limiter = vertical_limiter
         self.horizontal_limiter = horizontal_limiter
+        self.radius_limiter = radius_limiter
         
         self.vertical_upper_limit = 0.5
         self.vertical_lower_limit = 0
         
         self.horizontal_upper_limit = 1
         self.horizontal_lower_limit = 0
+        
+        self.radius_upper_limit = 1
+        self.radius_lower_limit = 0
         
         self.output_x = 0
         self.output_y = 0
@@ -168,7 +171,7 @@ class hsv_detector:
                     cv2.circle(self.image_output, (i[0], i[1]), 2, (255, 0, 0), 3)
                 
                 #choose the biggest circle
-                if i[2] > biggest_radius:
+                if self.check_radius_limit(i[2]) and i[2] > biggest_radius:
                     temp_x = round(i[0] / self.camera_width * 2 - 1, 3)
                     temp_y = round(i[1] / self.camera_height * 2 - 1, 3)
                     
@@ -200,6 +203,10 @@ class hsv_detector:
         else:
             self.output_x = self.circle_x
             self.output_y = self.circle_y
+    
+    def check_radius_limit(self, temp_rad):
+        temp_rad = round(temp_rad / self.camera_height * 4, 3)
+        return temp_rad > self.radius_lower_limit and temp_rad < self.radius_upper_limit or not self.radius_limiter
     
     def check_horizontal_limit(self, temp_x):
         return temp_x > self.horizontal_lower_limit and temp_x < self.horizontal_upper_limit or not self.horizontal_limiter
@@ -270,6 +277,11 @@ class hsv_detector:
         self.horizontal_lower_limit = lower_limit
         self.horizontal_upper_limit = upper_limit
     
+    def enable_radius_limiter(self, lower_limit = 0, upper_limit = 1):
+        self.radius_limiter = True
+        self.radius_lower_limit = lower_limit
+        self.radius_upper_limit = upper_limit
+    
     def visualize(self):
         self.visualization_enabled = True
     
@@ -278,9 +290,6 @@ class hsv_detector:
     
     def record(self):
         self.record_enabled = True
-    
-    def get_distance(self, a, b):
-        return math.sqrt(math.pow(a, 2) + math.pow(b, 2))
                   
     def get_circle_coord(self):
         return self.circle_x, self.circle_y, self.circle_z
