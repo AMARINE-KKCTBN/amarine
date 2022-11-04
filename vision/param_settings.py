@@ -35,10 +35,10 @@ transform_empty = {
     "field_canny_param2" : 150,
     "field_morph_kernel" : 7,
 }
-object_hsv_path = 'object_hsv.json'
-field_hsv_path = 'field_hsv.json'
-circle_params_path = 'circle_params.json'
-transform_params_path = 'transform_params.json'
+object_hsv_path = 'vision/object_hsv.json'
+field_hsv_path = 'vision/field_hsv.json'
+circle_params_path = 'vision/circle_params.json'
+transform_params_path = 'vision/transform_params.json'
 
 if path.exists(object_hsv_path):
     with open(object_hsv_path, 'r') as openfile:
@@ -118,7 +118,7 @@ cv2.createTrackbar('Field morph kernel','transform',transform_params['field_morp
 # if k == ord("s"):
 #     cv2.imwrite("starbucks.jpg", img)
 
-camera = cv2.VideoCapture(2)
+camera = cv2.VideoCapture(0)
 camera.set(cv2.CAP_PROP_FPS, 30)
 camera.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
 camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
@@ -206,13 +206,26 @@ while(1):
 
     object_kernel = np.ones((transform_params['object_morph_kernel'],transform_params['object_morph_kernel']),"uint8")
 
-    if object_hsv['H Lower'] > object_hsv['H Higher']:
-        object_hsv['H Lower'], object_hsv['H Higher'] = object_hsv['H Higher'], object_hsv['H Lower']
-    #red
-    object_LowerRegion = np.array([object_hsv['H Lower'],object_hsv['S Lower'],object_hsv['V Lower']],np.uint8)
-    object_upperRegion = np.array([object_hsv['H Higher'],object_hsv['S Higher'],object_hsv['V Higher']],np.uint8)
-
     object_mask = hsv
+    
+    if object_hsv['H Lower'] < object_hsv['H Higher']:
+        #normal
+        object_LowerRegion = np.array([object_hsv['H Lower'],object_hsv['S Lower'],object_hsv['V Lower']],np.uint8)
+        object_upperRegion = np.array([object_hsv['H Higher'],object_hsv['S Higher'],object_hsv['V Higher']],np.uint8)
+        object_mask = cv2.inRange(object_mask,object_LowerRegion,object_upperRegion)
+    else:
+        #h lower > h higher
+        object_LowerRegion = np.array([0,object_hsv['S Lower'],object_hsv['V Lower']],np.uint8)
+        object_upperRegion = np.array([object_hsv['H Higher'],object_hsv['S Higher'],object_hsv['V Higher']],np.uint8)
+        object_hue_lower = cv2.inRange(object_mask,object_LowerRegion,object_upperRegion)
+        
+        object_LowerRegion = np.array([object_hsv['H Lower'],object_hsv['S Lower'],object_hsv['V Lower']],np.uint8)
+        object_upperRegion = np.array([179,object_hsv['S Higher'],object_hsv['V Higher']],np.uint8)
+        object_hue_higher = cv2.inRange(object_mask,object_LowerRegion,object_upperRegion)
+        
+        object_mask = cv2.bitwise_or(object_hue_lower, object_hue_higher)
+        
+
     #morphological operations
     object_mask = cv2.morphologyEx(object_mask,cv2.MORPH_CLOSE, object_kernel)
     object_mask = cv2.morphologyEx(object_mask,cv2.MORPH_OPEN, object_kernel)
@@ -221,7 +234,6 @@ while(1):
     # object_mask = cv2.dilate(object_mask, object_kernel,iterations=1)
     # object_mask = cv2.erode(object_mask, object_kernel, iterations=2)
 
-    object_mask = cv2.inRange(object_mask,object_LowerRegion,object_upperRegion)
 
     #morphological operations
     # object_mask = cv2.morphologyEx(hsv,cv2.MORPH_OPEN, object_kernel)
