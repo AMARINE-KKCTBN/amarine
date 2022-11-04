@@ -22,24 +22,22 @@ def runFourThruster(cnt, isRunning):
         if isRunning.value == 1:
             if last_value != isRunning.value:
                 for speed in range (min_speed, max_speed+1):
-                    cnt.staticThruster(speed)
+                    # cnt.staticThruster(speed)
                     sleep(0.1)
                 print("DYNAMIC 1====================================")
             else:
-                cnt.staticThruster(max_speed)
-                print("STATIC 1")
+                # cnt.staticThruster(max_speed)
+                print("RUNNING STATIC 4 THRUSTER")
         else:
             if last_value != isRunning.value:
                 for speed in range(max_speed, -1, -1):
-                    cnt.staticThruster(speed)
+                    # cnt.staticThruster(speed)
                     sleep(0.1)
                 print("DYNAMIC 0===================================")
             else:
                 print("STATIC 0")
-                cnt.staticThruster(0)
+                # cnt.staticThruster(0)
                 print("Stopping 4 Thruster...")
-
-        print("PASSED VALUE", isRunning.value)
         last_value = isRunning.value
         sleep(0.1)
 
@@ -51,34 +49,85 @@ def runMainThruster(cnt, isRunning):
         if isRunning.value == 1:
             if last_value != isRunning.value:
                 for speed in range (min_speed, max_speed+1):
-                    cnt.mainThruster(speed)
+                    # cnt.mainThruster(speed)
                     sleep(0.1)
             else:
-                cnt.mainThruster(max_speed)
+                # cnt.mainThruster(max_speed)
+                pass
         else:
             if last_value != isRunning.value:
                 for speed in range(max_speed, -1, -1):
-                    cnt.mainThruster(speed)
+                    # cnt.mainThruster(speed)
                     sleep(0.1)
             else:
-                cnt.mainThruster(0)
+                # cnt.mainThruster(0)
                 print("Stopping Main Thruster...")
-        print("PASSED VALUE", isRunning.value)
         last_value = isRunning.value
         sleep(0.1)
 
-def runSerialCommunication(serial, isRunning):
+def runMissile(serial, isRelease):
+    while True:
+        if isRelease.value == 1:
+            serial.write(1)
+        else:
+            serial.write(0)
+        serial.flush()
+        sleep(0.1)
+
+def Protocol(data, isRunning, isRelease, last_left):
+    right = 0
+    left = 0
+
+    if data == '2\r\n':
+        right = 0
+    else:
+        right = 1
+        if data == '0\r\n':
+            left = 0
+        else:
+            left = 1
+
+    if right == 0:
+        isRunning.value = 0
+    else:
+        isRunning.value = 1
+        if left == 0 and last_left.value == 0:
+            isRelease.value = 0
+            # isRunningThruster.value = 0
+        elif left == 1 and last_left.value == 0:
+            isRelease.value = 1
+            # isRunningThruster.value = 1
+        elif left == 0 and last_left.value == 1:
+            isRelease.value = 0
+            # isRunningThruster.value = 0        
+    last_left = left
+    # left = 0
+    # right = 0
+    # if right == 0 and left == 0 -> standby program
+    # if right == 1 and left == 0 and last_left == 0 -> running cv and servo or with 4 thruster
+    # if right == 1 and left == 1 and last_left == 0 -> running cv and servo or with 4 thruster and runMainThruster
+    # if right == 1 and left == 0 and last_left == 1 -> run missile and stop all component
+
+
+def runSerialCommunication(serial, isRunning, isRelease, last_left):
     while True:
         try:
             if serial.in_waiting > 0:
                 data = serial.readline().decode('utf-8')
                 print("DATA RECEIVE: ", data)
-                if data == "1\r\n":
-                    isRunning.value = 1
-                    print("RUNNING THRUSTER")
-                else:
-                    isRunning.value = 0                    
-                    print("STOP THRUSTER")
+                Protocol(data, isRunning.value, isRelease.value, last_left.value)
+                # if data == "1\r\n":
+                #     pass
+                # elif data == "3=\r\n":
+                #     isRunning.value = 1
+                #     print("RUNNING THRUSTER")
+                #     pass
+                # elif data == "4\r\n":
+                #     isRunning.value = 0                    
+                #     print("STOP THRUSTER")
+                #     pass
+                # else:
+                #     pass
             else: 
                 print("Initiation of serial communication...")
 
@@ -119,8 +168,8 @@ def runVision(vision, cx, isRunning):
                 coord_x -= offset_x
             print("coord(x,y,z): " + str(vision.get_circle_coord()))
             cx.value = coord_x
-            if not vision.show_image():
-                break 
+            # if not vision.show_image():
+            #     break 
         else:
             print("Stopping Vision...")
         sleep(0.1)
@@ -131,7 +180,9 @@ if __name__ == "__main__":
 
     # MULTIPROCESS SHARED VARIABEL/VALUE
     isRunning = Value('i', 0)
+    isRelease = Value('i', 0)
     coord_x = Value('f', 0.0)
+    last_value = 0
 
     thruster_run = 17
     main_thruster_speed = 10
@@ -162,19 +213,22 @@ if __name__ == "__main__":
         runMainThruster_process = Process(target=runMainThruster ,args=(controller, isRunning))
         runVision_process = Process(target=runVision, args=(vision, coord_x, isRunning))
         runServo_process = Process(target=runServo, args=(controller, coord_x, isRunning))
-        runSerialCommunication_thread = Process(target=runSerialCommunication, args=(ser, isRunning))
+        runSerialCommunication_thread = Process(target=runSerialCommunication, args=(ser, isRunning, isRelease, last_value))
+        runMissile_process = Process(target=runMissile, args=(ser, isRelease))
         
         runMainThruster_process.start()
         runFourThruster_process.start()
         runVision_process.start()
         runServo_process.start()
         runSerialCommunication_thread.start()
+        runMissile_process.start()
 
         runMainThruster_process.join()
         runFourThruster_process.join()
         runVision_process.join()
         runServo_process.join()
         runSerialCommunication_thread.join()
+        runMissile_process.join()
 
         # runMainThruster_process = threading.Thread(target=runMainThruster, args=(controller, ser, isRunning))
         # thrusterRun_process.start()
