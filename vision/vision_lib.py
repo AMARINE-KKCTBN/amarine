@@ -4,7 +4,7 @@ import json
 import math
 
 class hsv_detector:
-    def __init__(self, camera_height = 320, camera_width = 240, masking_enabled = False, record_enabled = False, visualization_enabled = False, vertical_limiter = False):
+    def __init__(self, camera_height = 320, camera_width = 240, stabilizer_enabled = False, masking_enabled = False, record_enabled = False, visualization_enabled = False, vertical_limiter = False, horizontal_limiter = False):
         self.object_hsv_path = 'vision/object_hsv.json'
         self.field_hsv_path = 'vision/field_hsv.json'
         self.circle_params_path = 'vision/circle_params.json'
@@ -23,11 +23,21 @@ class hsv_detector:
         
         self.masking_enabled = masking_enabled
         self.visualization_enabled = visualization_enabled
-        self.vertical_limiter = vertical_limiter
         self.record_enabled = record_enabled
+        self.stabilizer_enabled = stabilizer_enabled
+        
+        self.vertical_limiter = vertical_limiter
+        self.horizontal_limiter = horizontal_limiter
         
         self.vertical_upper_limit = 0.5
         self.vertical_lower_limit = 0
+        
+        self.horizontal_upper_limit = 1
+        self.horizontal_lower_limit = 0
+        
+        self.output_x = 0
+        self.output_y = 0
+        self.output_z = 0
         
         self.video_codec = cv2.VideoWriter_fourcc(*'mp4v') ##(*'XVID')
         self.video_file = "Recorded video.mp4"
@@ -46,8 +56,6 @@ class hsv_detector:
         self.field_LowerRegion = np.array([self.field_hsv['H Lower'],self.field_hsv['S Lower'],self.field_hsv['V Lower']],np.uint8)
         self.field_upperRegion = np.array([self.field_hsv['H Higher'],self.field_hsv['S Higher'],self.field_hsv['V Higher']],np.uint8)
         
-        
-
     def read_params(self):        
         with open(self.object_hsv_path, 'r') as openfile:
             self.object_hsv = json.load(openfile)
@@ -107,7 +115,6 @@ class hsv_detector:
         # self.object_mask = cv2.dilate(self.object_mask, self.morph_kernel,iterations=1)
         # self.object_mask = cv2.erode(self.object_mask, self.morph_kernel, iterations=2)
         
-        
     def field_masking(self):
         self.field_mask = self.image_hsv
         
@@ -157,57 +164,81 @@ class hsv_detector:
                 
                 #draw all circle
                 if self.visualization_enabled:
-                    cv2.circle(self.image_output, (i[0], i[1]), i[2], (0, 255, 0), 2)
+                    cv2.circle(self.image_output, (i[0], i[1]), i[2], (0, 0, 255), 2)
                     cv2.circle(self.image_output, (i[0], i[1]), 2, (255, 0, 0), 3)
                 
                 #choose the biggest circle
                 if i[2] > biggest_radius:
+                    temp_x = round(i[0] / self.camera_width * 2 - 1, 3)
                     temp_y = round(i[1] / self.camera_height * 2 - 1, 3)
                     
                     #choose the circles within limit
-                    if temp_y > self.vertical_lower_limit and temp_y < self.vertical_upper_limit or not self.vertical_limiter:
+                    if  self.check_vertical_limit(temp_y) and self.check_horizontal_limit(temp_x):
                         coord_obj = i
-                        temp_x = round(i[0] / self.camera_width * 2 - 1, 3)
                         biggest_radius = i[2]
                     else:
+                        temp_x = -1
                         temp_y = -1
-            
+                
             #published data, -1 -> 1
             self.circle_x = temp_x
             self.circle_y = temp_y
             self.circle_z = biggest_radius
             #draw choosen circle
             if coord_obj is not None:
-                cv2.circle(self.image_output, (coord_obj[0], coord_obj[1]), coord_obj[2], (0, 0, 255), 2)
+                cv2.circle(self.image_output, (coord_obj[0], coord_obj[1]), coord_obj[2], (0, 255, 0), 2)
                 cv2.circle(self.image_output, (coord_obj[0], coord_obj[1]), 2, (255, 0, 0), 3)
+                
+    def stabilizer(self):
+        if self.circle_x != -1:
+            if self.output_x != -1:
+                self.output_x = (self.output_x + self.circle_x) / 2
+                self.output_y = (self.output_y + self.circle_y) / 2
+            else:
+                self.output_x = self.circle_x
+                self.output_y = self.circle_y
+        else:
+            self.output_x = self.circle_x
+            self.output_y = self.circle_y
+    
+    def check_horizontal_limit(self, temp_x):
+        return temp_x > self.horizontal_lower_limit and temp_x < self.horizontal_upper_limit or not self.horizontal_limiter
+                
+    def check_vertical_limit(self, temp_y):
+        return temp_y > self.vertical_lower_limit and temp_y < self.vertical_upper_limit or not self.vertical_limiter
     
     def draw_line(self, start_x, start_y, end_x, end_y):
         start_point_x = int((start_x + 1) / 2 * self.camera_width)
         start_point_y = int((start_y + 1) / 2 * self.camera_height)
         end_point_x = int((end_x + 1) / 2 * self.camera_width)
         end_point_y = int((end_y + 1) / 2 * self.camera_height)
-        cv2.line(self.image_output, (start_point_x, start_point_y), (end_point_x, end_point_y), (255, 255, 255), 2)
+        cv2.line(self.image_output, (start_point_x, start_point_y), (end_point_x, end_point_y), (255, 255, 255), 1)
     
-    def draw_red_line(self, start_x, start_y, end_x, end_y):
+    def draw_green_line(self, start_x, start_y, end_x, end_y):
         start_point_x = int((start_x + 1) / 2 * self.camera_width)
         start_point_y = int((start_y + 1) / 2 * self.camera_height)
         end_point_x = int((end_x + 1) / 2 * self.camera_width)
         end_point_y = int((end_y + 1) / 2 * self.camera_height)
-        cv2.line(self.image_output, (start_point_x, start_point_y), (end_point_x, end_point_y), (0, 0, 255), 2)
+        cv2.line(self.image_output, (start_point_x, start_point_y), (end_point_x, end_point_y), (0, 255, 0), 3)
         
     def line_visualization(self):
-        #horizontal left limit
-        self.draw_line(-1, 0, 1, 0)
-        #horizontal center reference
-        self.draw_line(-1, 0.5, 1, 0.5)
-        
-        #vertical upper limit
-        self.draw_line(0, -1, 0, 1)
         #vertical lower limit
-        self.draw_line(0.5, -1, 0.5, 1)
+        self.draw_line(-1, self.vertical_lower_limit, 1, self.vertical_lower_limit)
+        #vertical upper limit
+        self.draw_line(-1, self.vertical_upper_limit, 1, self.vertical_upper_limit)
+        
+        #horizontal left limit
+        self.draw_line(self.horizontal_lower_limit, -1, self.horizontal_lower_limit, 1)
+        #horizontal right limit
+        self.draw_line(self.horizontal_upper_limit, -1, self.horizontal_upper_limit, 1)
+        #horizontal center reference
+        self.draw_line(self.horizontal_upper_limit/2, -1, self.horizontal_upper_limit/2, 1)
         
         #draw coord_x
-        self.draw_red_line(self.circle_x, 0, self.circle_x, 0.5)
+        # if self.circle_x is not -1:
+        #     self.draw_green_line(self.circle_x, 0, self.circle_x, 0.5)
+        if self.output_x != -1:
+            self.draw_green_line(self.output_x, 0, self.output_x, 0.5)
     
     def main_process(self):
         self.read_camera()
@@ -215,24 +246,35 @@ class hsv_detector:
         
         self.image_output=cv2.bitwise_and(self.image_bgr, self.image_bgr, mask = self.object_mask)
         
+        if self.masking_enabled:
+            self.field_masking()
+        
         self.detect_circle_object()
+        
+        if self.stabilizer_enabled:
+            self.stabilizer()
         
         if self.visualization_enabled:
             self.line_visualization()
         
-        if self.masking_enabled:
-            self.field_masking()
-        
         if self.record_enabled:
             self.record_video.write(self.image_output)
     
-    def enable_limiter(self, lower_limit = 0, upper_limit = 0.5):
+    def enable_vertical_limiter(self, lower_limit = 0, upper_limit = 0.5):
         self.vertical_limiter = True
         self.vertical_lower_limit = lower_limit
         self.vertical_upper_limit = upper_limit
     
+    def enable_horizontal_limiter(self, lower_limit = 0, upper_limit = 1):
+        self.horizontal_limiter = True
+        self.horizontal_lower_limit = lower_limit
+        self.horizontal_upper_limit = upper_limit
+    
     def visualize(self):
         self.visualization_enabled = True
+    
+    def stabilize(self):
+        self.stabilizer_enabled = True
     
     def record(self):
         self.record_enabled = True
