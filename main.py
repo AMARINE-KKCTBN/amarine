@@ -80,7 +80,7 @@ def runMissile(serial, isRelease):
         sleep(0.1)
 
 def Protocol(data, isRunning, isRelease, isRunningThruster):
-    global last_value
+    global last_value, release_status
     right = 0
     left = 0
 
@@ -100,7 +100,7 @@ def Protocol(data, isRunning, isRelease, isRunningThruster):
         isRunning.value = 0
     else:
         isRunning.value = 1
-        if left == 0 and last_value == 0:
+        if left == 0 and last_value == 0 and release_status == 0:
             isRelease.value = 0
             isRunningThruster.value = 0
         elif left == 1 and last_value == 0 or left == 1 and last_value == 1:
@@ -109,7 +109,8 @@ def Protocol(data, isRunning, isRelease, isRunningThruster):
         # elif left == 0 and last_value == 1:
         else:
             isRelease.value = 1
-            isRunningThruster.value = 0        
+            release_status = 1
+            
     last_value = left
     # left = 0
     # right = 0
@@ -120,7 +121,6 @@ def Protocol(data, isRunning, isRelease, isRunningThruster):
 
 
 def runSerialCommunication(serial, isRunning, isRelease, isRunningThruster):
-    global last_value
     while True:
         try:
             if serial.in_waiting > 0:
@@ -195,6 +195,7 @@ if __name__ == "__main__":
     isRunningThruster = Value('i', 0)
     coord_x = Value('f', 0.0)
     last_value = 0
+    release_status = 0
 
     thruster_run = 17
     main_thruster_speed = 10
