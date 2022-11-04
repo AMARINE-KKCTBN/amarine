@@ -69,8 +69,6 @@ def runMissile(serial, isRelease):
     while True:
         if isRelease.value == 1:
             serial.write(1)
-        else:
-            serial.write(0)
         serial.flush()
         sleep(0.1)
 
