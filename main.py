@@ -70,8 +70,12 @@ def runMissile(serial, isRelease):
         print(isRelease.value)
         if isRelease.value == 1:
             ser.write('1'.encode('utf-8'))
+            print("RELEASE TORPEDO")
+            # sleep(1)
         else: 
             ser.write('0'.encode('utf-8'))
+            print("LOCK TORPEDO")
+            # sleep(1)
         serial.flush()
         sleep(0.1)
 
