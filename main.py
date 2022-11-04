@@ -202,7 +202,7 @@ if __name__ == "__main__":
         mainThrusterPinConfig=mainProp,
         allServoPinConfig=[mainFin_servo, secondaryFin_servo],
     )
-    ser = serial.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=None)
+    ser = serial.Serial(port='/dev/ttyUSB1', baudrate=9600, timeout=None)
     try:
         vision = vision_lib.hsv_detector(camera_height=240, camera_width=320, masking_enabled=False)
         ser.reset_input_buffer()
