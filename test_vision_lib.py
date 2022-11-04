@@ -3,7 +3,6 @@ import vision.vision_lib as vision_lib
 offset_x = 0.5
 vision = vision_lib.hsv_detector()
 vision.visualize()
-# vision.enable_limiter(0, 0.5)
 vision.record()
 while True:
     vision.main_process()

@@ -107,9 +107,11 @@ def runServo(cnt, cx, isRunning):
 
 def runVision(vision, cx, isRunning):
     offset_x = 0.5
+    vision.visualize()
+    vision.record()
     while True:
         if isRunning.value == 1:
-            vision.detect_circle_object()
+            vision.main_process()
             coord_x, coord_y, coord_z = vision.get_circle_coord()
             if coord_x < 0:
                 coord_x = -1
