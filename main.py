@@ -46,7 +46,7 @@ def runMainThruster(cnt, isRunning, isRunningThruster):
     max_speed = 10
     min_speed = 1
     while True:
-        if isRunning.value == 1 and isRunningThruster == 1:
+        if isRunning.value == 1 and isRunningThruster.value == 1:
             if last_value != isRunning.value:
                 for speed in range (min_speed, max_speed+1):
                     cnt.mainThruster(speed)
@@ -114,13 +114,13 @@ def Protocol(data, isRunning, isRelease, last_left, isRunningThruster):
     # if right == 1 and left == 0 and last_left == 1 -> run missile and stop all component
 
 
-def runSerialCommunication(serial, isRunning, isRelease, last_left):
+def runSerialCommunication(serial, isRunning, isRelease, last_left, isRunningThruster):
     while True:
         try:
             if serial.in_waiting > 0:
                 data = serial.readline().decode('utf-8')
                 print("DATA RECEIVE: ", data)
-                Protocol(data, isRunning, isRelease, last_left)
+                Protocol(data, isRunning, isRelease, last_left, isRunningThruster)
                 # if data == "1\r\n":
                 #     pass
                 # elif data == "3=\r\n":
