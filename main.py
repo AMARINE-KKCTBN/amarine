@@ -41,7 +41,7 @@ def runFourThruster(cnt, isRunning):
 
         print("PASSED VALUE", isRunning.value)
         last_value = isRunning.value
-        sleep(0.5)
+        sleep(0.1)
 
 def runMainThruster(cnt, isRunning):
     last_value = 0
@@ -65,7 +65,7 @@ def runMainThruster(cnt, isRunning):
                 print("Stopping Main Thruster...")
         print("PASSED VALUE", isRunning.value)
         last_value = isRunning.value
-        sleep(0.5)
+        sleep(0.1)
 
 def runSerialCommunication(serial, isRunning):
     while True:
@@ -73,7 +73,7 @@ def runSerialCommunication(serial, isRunning):
             if serial.in_waiting > 0:
                 data = serial.readline().decode('utf-8')
                 print("DATA RECEIVE: ", data)
-                if data == "0\r\n":
+                if data == "1\r\n":
                     isRunning.value = 1
                     print("RUNNING THRUSTER")
                 else:
@@ -84,7 +84,7 @@ def runSerialCommunication(serial, isRunning):
 
         except Exception as exception:
             print("There's problem with serial communication!", exception)
-        sleep(0.5)
+        sleep(0.1)
 
 def runServo(cnt, cx, isRunning):
     coord_x = 0
@@ -107,9 +107,11 @@ def runServo(cnt, cx, isRunning):
 
 def runVision(vision, cx, isRunning):
     offset_x = 0.5
+    vision.visualize()
+    vision.record()
     while True:
         if isRunning.value == 1:
-            vision.detect_circle_object()
+            vision.main_process()
             coord_x, coord_y, coord_z = vision.get_circle_coord()
             if coord_x < 0:
                 coord_x = -1
@@ -117,11 +119,11 @@ def runVision(vision, cx, isRunning):
                 coord_x -= offset_x
             print("coord(x,y,z): " + str(vision.get_circle_coord()))
             cx.value = coord_x
-            # if not vision.show_image():
-            #     break 
+            if not vision.show_image():
+                break 
         else:
             print("Stopping Vision...")
-        sleep(0.5)
+        sleep(0.1)
 
 if __name__ == "__main__":
 
@@ -149,18 +151,18 @@ if __name__ == "__main__":
         mainThrusterPinConfig=mainProp,
         allServoPinConfig=[mainFin_servo, secondaryFin_servo],
     )
+    ser = serial.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=None)
     try:
         vision = vision_lib.hsv_detector(camera_height=240, camera_width=320, masking_enabled=False)
-        ser = serial.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=5)
         ser.reset_input_buffer()
 
         controller.initMainThruster()
 
         runFourThruster_process = Process(target=runFourThruster ,args=(controller, isRunning))
         runMainThruster_process = Process(target=runMainThruster ,args=(controller, isRunning))
-        runVision_process = Process(target=runVision, args=(controller, coord_x, isRunning))
+        runVision_process = Process(target=runVision, args=(vision, coord_x, isRunning))
         runServo_process = Process(target=runServo, args=(controller, coord_x, isRunning))
-        runSerialCommunication_thread = Thread(target=runSerialCommunication, args=(serial, isRunning))
+        runSerialCommunication_thread = Process(target=runSerialCommunication, args=(ser, isRunning))
         
         runMainThruster_process.start()
         runFourThruster_process.start()
