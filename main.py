@@ -84,6 +84,8 @@ def Protocol(data, isRunning, isRelease, isRunningThruster):
     right = 0
     left = 0
 
+    print("LAST_VALUE================================", last_value)
+
     if data == '2\r\n':
         right = 0
     else:
