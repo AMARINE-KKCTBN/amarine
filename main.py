@@ -1,5 +1,5 @@
 from threading import Thread
-from multiprocessing import Process, Value, Queue
+from multiprocessing import Process, Value, Queue, Lock
 from time import sleep
 import RPi.GPIO as GPIO
 from adafruit_servokit import ServoKit
@@ -65,11 +65,13 @@ def runMainThruster(cnt, isRunning, isRunningThruster):
         last_value = isRunning.value
         sleep(0.1)
 
-def runMissile(serial, isRelease):
+def runMissile(serial, isRelease, lock):
     while True:
         print("IS RELEASEEEEE========", isRelease.value)
         if isRelease.value == 1:
+            lock.acquire()
             serial.write('1'.encode('utf-8'))
+            lock.release()
             print("RELEASE TORPEDO")
             # sleep(1)
         else: 
@@ -197,6 +199,7 @@ if __name__ == "__main__":
     coord_x = Value('f', 0.0)
     last_value = 0
     release_status = 0
+    lock = Lock()
 
     thruster_run = 17
     main_thruster_speed = 10
@@ -228,7 +231,7 @@ if __name__ == "__main__":
         runVision_process = Process(target=runVision, args=(vision, coord_x, isRunning))
         runServo_process = Process(target=runServo, args=(controller, coord_x, isRunning))
         runSerialCommunication_thread = Process(target=runSerialCommunication, args=(ser, isRunning, isRelease, isRunningThruster))
-        runMissile_process = Process(target=runMissile, args=(ser, isRelease))
+        runMissile_process = Process(target=runMissile, args=(ser, isRelease, lock))
         
         runMainThruster_process.start()
         runFourThruster_process.start()
