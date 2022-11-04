@@ -67,7 +67,7 @@ def runMainThruster(cnt, isRunning, isRunningThruster):
 
 def runMissile(serial, isRelease):
     while True:
-        print(isRelease.value)
+        print("IS RELEASEEEEE========", isRelease.value)
         if isRelease.value == 1:
             serial.write('1'.encode('utf-8'))
             print("RELEASE TORPEDO")
