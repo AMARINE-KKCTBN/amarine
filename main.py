@@ -16,7 +16,7 @@ from ctypes import c_bool, c_float, c_int
 
 def runFourThruster(cnt, isRunning):
     last_value = 0
-    max_speed = 10
+    max_speed = 15
     min_speed = 1
     while True:
         if isRunning.value == 1:
