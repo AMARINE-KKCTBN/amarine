@@ -113,7 +113,7 @@ def runSerialCommunication(serial, isRunning, isRelease, last_left):
             if serial.in_waiting > 0:
                 data = serial.readline().decode('utf-8')
                 print("DATA RECEIVE: ", data)
-                Protocol(data, isRunning.value, isRelease.value, last_left.value)
+                Protocol(data, isRunning.value, isRelease.value, last_left)
                 # if data == "1\r\n":
                 #     pass
                 # elif data == "3=\r\n":
