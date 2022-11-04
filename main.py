@@ -73,7 +73,7 @@ def runSerialCommunication(serial, isRunning):
             if serial.in_waiting > 0:
                 data = serial.readline().decode('utf-8')
                 print("DATA RECEIVE: ", data)
-                if data == "0\r\n":
+                if data == "1\r\n":
                     isRunning.value = 1
                     print("RUNNING THRUSTER")
                 else:
@@ -117,8 +117,8 @@ def runVision(vision, cx, isRunning):
                 coord_x -= offset_x
             print("coord(x,y,z): " + str(vision.get_circle_coord()))
             cx.value = coord_x
-            # if not vision.show_image():
-            #     break 
+            if not vision.show_image():
+                break 
         else:
             print("Stopping Vision...")
         sleep(0.1)
@@ -149,7 +149,7 @@ if __name__ == "__main__":
         mainThrusterPinConfig=mainProp,
         allServoPinConfig=[mainFin_servo, secondaryFin_servo],
     )
-    ser = serial.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=1)
+    ser = serial.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=None)
     try:
         vision = vision_lib.hsv_detector(camera_height=240, camera_width=320, masking_enabled=False)
         ser.reset_input_buffer()
@@ -158,20 +158,20 @@ if __name__ == "__main__":
 
         runFourThruster_process = Process(target=runFourThruster ,args=(controller, isRunning))
         runMainThruster_process = Process(target=runMainThruster ,args=(controller, isRunning))
-        # runVision_process = Process(target=runVision, args=(vision, coord_x, isRunning))
-        # runServo_process = Process(target=runServo, args=(controller, coord_x, isRunning))
+        runVision_process = Process(target=runVision, args=(vision, coord_x, isRunning))
+        runServo_process = Process(target=runServo, args=(controller, coord_x, isRunning))
         runSerialCommunication_thread = Process(target=runSerialCommunication, args=(ser, isRunning))
         
         runMainThruster_process.start()
         runFourThruster_process.start()
-        # runVision_process.start()
-        # runServo_process.start()
+        runVision_process.start()
+        runServo_process.start()
         runSerialCommunication_thread.start()
 
         runMainThruster_process.join()
         runFourThruster_process.join()
-        # runVision_process.join()
-        # runServo_process.join()
+        runVision_process.join()
+        runServo_process.join()
         runSerialCommunication_thread.join()
 
         # runMainThruster_process = threading.Thread(target=runMainThruster, args=(controller, ser, isRunning))
