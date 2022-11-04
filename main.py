@@ -222,7 +222,7 @@ if __name__ == "__main__":
         controller.initMainThruster()
 
         runFourThruster_process = Process(target=runFourThruster ,args=(controller, isRunning))
-        runMainThruster_process = Process(target=runMainThruster ,args=(controller, isRunning))
+        runMainThruster_process = Process(target=runMainThruster ,args=(controller, isRunning, isRunningThruster))
         runVision_process = Process(target=runVision, args=(vision, coord_x, isRunning))
         runServo_process = Process(target=runServo, args=(controller, coord_x, isRunning))
         runSerialCommunication_thread = Process(target=runSerialCommunication, args=(ser, isRunning, isRelease, isRunningThruster))
