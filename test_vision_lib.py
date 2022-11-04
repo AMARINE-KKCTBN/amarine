@@ -6,7 +6,7 @@ vision.enable_vertical_limiter(0, 0.5)
 vision.enable_horizontal_limiter(0, 1)
 vision.visualize()
 vision.stabilize()
-# vision.record()
+vision.record()
 while True:
     vision.main_process()
     coord_x, coord_y, coord_z = vision.get_circle_coord()
