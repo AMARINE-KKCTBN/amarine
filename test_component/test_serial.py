@@ -6,7 +6,7 @@ if __name__ == '__main__':
     while True:
         if ser.in_waiting > 0:
             line = ser.readline().decode('utf-8')
-            if (line == "1\r\n" or line == "0\r\n"):
+            if (line == "1\r\n" or line == "0"):
                 print(line)
                 # print(int(line))
             
