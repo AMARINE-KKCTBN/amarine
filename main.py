@@ -41,12 +41,12 @@ def runFourThruster(cnt, isRunning):
         last_value = isRunning.value
         sleep(0.1)
 
-def runMainThruster(cnt, isRunning):
+def runMainThruster(cnt, isRunning, isRunningThruster):
     last_value = 0
     max_speed = 10
     min_speed = 1
     while True:
-        if isRunning.value == 1:
+        if isRunning.value == 1 and isRunningThruster == 1:
             if last_value != isRunning.value:
                 for speed in range (min_speed, max_speed+1):
                     cnt.mainThruster(speed)
@@ -79,7 +79,7 @@ def runMissile(serial, isRelease):
         serial.flush()
         sleep(0.1)
 
-def Protocol(data, isRunning, isRelease, last_left):
+def Protocol(data, isRunning, isRelease, last_left, isRunningThruster):
     right = 0
     left = 0
 
@@ -98,13 +98,13 @@ def Protocol(data, isRunning, isRelease, last_left):
         isRunning.value = 1
         if left == 0 and last_left == 0:
             isRelease.value = 0
-            # isRunningThruster.value = 0
+            isRunningThruster.value = 0
         elif left == 1 and last_left == 0:
             isRelease.value = 1
-            # isRunningThruster.value = 1
+            isRunningThruster.value = 1
         elif left == 0 and last_left == 1:
             isRelease.value = 0
-            # isRunningThruster.value = 0        
+            isRunningThruster.value = 0        
     last_left = left
     # left = 0
     # right = 0
@@ -186,6 +186,7 @@ if __name__ == "__main__":
     # MULTIPROCESS SHARED VARIABEL/VALUE
     isRunning = Value('i', 0)
     isRelease = Value('i', 0)
+    isRunningThruster = Value('i', 0)
     coord_x = Value('f', 0.0)
     last_value = 0
 
@@ -218,7 +219,7 @@ if __name__ == "__main__":
         runMainThruster_process = Process(target=runMainThruster ,args=(controller, isRunning))
         runVision_process = Process(target=runVision, args=(vision, coord_x, isRunning))
         runServo_process = Process(target=runServo, args=(controller, coord_x, isRunning))
-        runSerialCommunication_thread = Process(target=runSerialCommunication, args=(ser, isRunning, isRelease, last_value))
+        runSerialCommunication_thread = Process(target=runSerialCommunication, args=(ser, isRunning, isRelease, last_value, isRunningThruster))
         runMissile_process = Process(target=runMissile, args=(ser, isRelease))
         
         runMainThruster_process.start()
