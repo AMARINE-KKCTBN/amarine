@@ -71,15 +71,16 @@ def runMissile(serial, isRelease):
         if isRelease.value == 1:
             ser.write('1'.encode('utf-8'))
             print("RELEASE TORPEDO")
-            sleep(1)
+            # sleep(1)
         else: 
             ser.write('0'.encode('utf-8'))
             print("LOCK TORPEDO")
-            sleep(1)
+            # sleep(1)  
         serial.flush()
         sleep(0.1)
 
-def Protocol(data, isRunning, isRelease, last_left, isRunningThruster):
+def Protocol(data, isRunning, isRelease, isRunningThruster):
+    global last_value
     right = 0
     left = 0
 
@@ -96,16 +97,16 @@ def Protocol(data, isRunning, isRelease, last_left, isRunningThruster):
         isRunning.value = 0
     else:
         isRunning.value = 1
-        if left == 0 and last_left == 0:
+        if left == 0 and last_value == 0:
             isRelease.value = 0
             isRunningThruster.value = 0
-        elif left == 1 and last_left == 0:
+        elif left == 1 and last_value == 0:
             isRelease.value = 1
             isRunningThruster.value = 1
-        elif left == 0 and last_left == 1:
+        elif left == 0 and last_value == 1:
             isRelease.value = 0
             isRunningThruster.value = 0        
-    last_left = left
+    last_value = left
     # left = 0
     # right = 0
     # if right == 0 and left == 0 -> standby program
@@ -114,13 +115,14 @@ def Protocol(data, isRunning, isRelease, last_left, isRunningThruster):
     # if right == 1 and left == 0 and last_left == 1 -> run missile and stop all component
 
 
-def runSerialCommunication(serial, isRunning, isRelease, last_left, isRunningThruster):
+def runSerialCommunication(serial, isRunning, isRelease, isRunningThruster):
+    global last_value
     while True:
         try:
             if serial.in_waiting > 0:
                 data = serial.readline().decode('utf-8')
                 print("DATA RECEIVE: ", data)
-                Protocol(data, isRunning, isRelease, last_left, isRunningThruster)
+                Protocol(data, isRunning, isRelease, last_value, isRunningThruster)
                 # if data == "1\r\n":
                 #     pass
                 # elif data == "3=\r\n":
@@ -219,7 +221,7 @@ if __name__ == "__main__":
         runMainThruster_process = Process(target=runMainThruster ,args=(controller, isRunning))
         runVision_process = Process(target=runVision, args=(vision, coord_x, isRunning))
         runServo_process = Process(target=runServo, args=(controller, coord_x, isRunning))
-        runSerialCommunication_thread = Process(target=runSerialCommunication, args=(ser, isRunning, isRelease, last_value, isRunningThruster))
+        runSerialCommunication_thread = Process(target=runSerialCommunication, args=(ser, isRunning, isRelease, isRunningThruster))
         runMissile_process = Process(target=runMissile, args=(ser, isRelease))
         
         runMainThruster_process.start()
