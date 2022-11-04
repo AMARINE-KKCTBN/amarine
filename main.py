@@ -53,6 +53,7 @@ def runMainThruster(cnt, isRunning, isRunningThruster):
                     sleep(0.1)
             else:
                 cnt.mainThruster(max_speed)
+            print("RUNNING THRUSTER")
         else:
             if last_value != isRunning.value:
                 for speed in range(max_speed, -1, -1):
@@ -60,7 +61,7 @@ def runMainThruster(cnt, isRunning, isRunningThruster):
                     sleep(0.1)
             else:
                 cnt.mainThruster(0)
-                print("Stopping Main Thruster...")
+            print("Stopping Main Thruster...")
         last_value = isRunning.value
         sleep(0.1)
 
