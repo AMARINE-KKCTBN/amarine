@@ -4,7 +4,7 @@ import json
 import math
 
 class hsv_detector:
-    def __init__(self, camera_height = 320, camera_width = 240, masking_enabled = False, visualization_enabled = False, vertical_limiter = False):
+    def __init__(self, camera_height = 320, camera_width = 240, masking_enabled = False, record_enabled = False, visualization_enabled = False, vertical_limiter = False):
         self.object_hsv_path = 'vision/object_hsv.json'
         self.field_hsv_path = 'vision/field_hsv.json'
         self.circle_params_path = 'vision/circle_params.json'
@@ -15,14 +15,23 @@ class hsv_detector:
         self.camera.set(cv2.CAP_PROP_FPS, 30)
         self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
         self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
-        self.camera_height = self.camera.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        self.camera_width = self.camera.get(cv2.CAP_PROP_FRAME_WIDTH)
+        self.camera_height = int(self.camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.camera_width = int(self.camera.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.camera_fps = int(self.camera.get(cv2.CAP_PROP_FPS))
         
         self.image_output = np.zeros((100,100,3), dtype=np.uint8)
         
         self.masking_enabled = masking_enabled
         self.visualization_enabled = visualization_enabled
         self.vertical_limiter = vertical_limiter
+        self.record_enabled = record_enabled
+        
+        self.vertical_upper_limit = 0.5
+        self.vertical_lower_limit = 0
+        
+        self.video_codec = cv2.VideoWriter_fourcc(*'mp4v') ##(*'XVID')
+        self.video_file = "Recorded video.mp4"
+        self.record_video = cv2.VideoWriter(self.video_file, self.video_codec, self.camera_fps, (self.camera_width, self.camera_height))
         
         self.read_params()
         
@@ -156,7 +165,7 @@ class hsv_detector:
                     temp_y = round(i[1] / self.camera_height * 2 - 1, 3)
                     
                     #choose the circles within limit
-                    if temp_y > 0 and temp_y < 0.5 or not self.vertical_limiter:
+                    if temp_y > self.vertical_lower_limit and temp_y < self.vertical_upper_limit or not self.vertical_limiter:
                         coord_obj = i
                         temp_x = round(i[0] / self.camera_width * 2 - 1, 3)
                         biggest_radius = i[2]
@@ -213,12 +222,20 @@ class hsv_detector:
         
         if self.masking_enabled:
             self.field_masking()
+        
+        if self.record_enabled:
+            self.record_video.write(self.image_output)
     
-    def enable_limiter(self):
+    def enable_limiter(self, lower_limit = 0, upper_limit = 0.5):
         self.vertical_limiter = True
+        self.vertical_lower_limit = lower_limit
+        self.vertical_upper_limit = upper_limit
     
     def visualize(self):
         self.visualization_enabled = True
+    
+    def record(self):
+        self.record_enabled = True
     
     def get_distance(self, a, b):
         return math.sqrt(math.pow(a, 2) + math.pow(b, 2))
