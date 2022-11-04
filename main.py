@@ -53,7 +53,7 @@ def runMainThruster(cnt, isRunning, isRunningThruster):
                     sleep(0.1)
             else:
                 cnt.mainThruster(max_speed)
-            print("RUNNING THRUSTER")
+            print("RUNNING THRUSTER?????????????????????????")
         else:
             if last_value != isRunning.value:
                 for speed in range(max_speed, -1, -1):
@@ -94,6 +94,7 @@ def Protocol(data, isRunning, isRelease, isRunningThruster):
             left = 0
         else:
             left = 1
+        print("DATA RECEIVE===============================", data, left)
 
     if right == 0:
         isRunning.value = 0
@@ -105,7 +106,8 @@ def Protocol(data, isRunning, isRelease, isRunningThruster):
         elif left == 1 and last_value == 0:
             isRelease.value = 0
             isRunningThruster.value = 1
-        elif left == 0 and last_value == 1:
+        # elif left == 0 and last_value == 1:
+        else:
             isRelease.value = 1
             isRunningThruster.value = 0        
     last_value = left
