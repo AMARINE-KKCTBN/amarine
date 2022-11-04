@@ -16,27 +16,27 @@ from ctypes import c_bool, c_float, c_int
 
 def runFourThruster(cnt, isRunning):
     last_value = 0
-    max_speed = 15
+    max_speed = 10
     min_speed = 1
     while True:
         if isRunning.value == 1:
             if last_value != isRunning.value:
                 for speed in range (min_speed, max_speed+1):
-                    # cnt.staticThruster(speed)
+                    cnt.staticThruster(speed)
                     sleep(0.1)
                 print("DYNAMIC 1====================================")
             else:
-                # cnt.staticThruster(max_speed)
+                cnt.staticThruster(max_speed)
                 print("RUNNING STATIC 4 THRUSTER")
         else:
             if last_value != isRunning.value:
                 for speed in range(max_speed, -1, -1):
-                    # cnt.staticThruster(speed)
+                    cnt.staticThruster(speed)
                     sleep(0.1)
                 print("DYNAMIC 0===================================")
             else:
                 print("STATIC 0")
-                # cnt.staticThruster(0)
+                cnt.staticThruster(0)
                 print("Stopping 4 Thruster...")
         last_value = isRunning.value
         sleep(0.1)
@@ -49,18 +49,18 @@ def runMainThruster(cnt, isRunning):
         if isRunning.value == 1:
             if last_value != isRunning.value:
                 for speed in range (min_speed, max_speed+1):
-                    # cnt.mainThruster(speed)
+                    cnt.mainThruster(speed)
                     sleep(0.1)
             else:
-                # cnt.mainThruster(max_speed)
+                cnt.mainThruster(max_speed)
                 pass
         else:
             if last_value != isRunning.value:
                 for speed in range(max_speed, -1, -1):
-                    # cnt.mainThruster(speed)
+                    cnt.mainThruster(speed)
                     sleep(0.1)
             else:
-                # cnt.mainThruster(0)
+                cnt.mainThruster(0)
                 print("Stopping Main Thruster...")
         last_value = isRunning.value
         sleep(0.1)
@@ -71,11 +71,11 @@ def runMissile(serial, isRelease):
         if isRelease.value == 1:
             ser.write('1'.encode('utf-8'))
             print("RELEASE TORPEDO")
-            # sleep(1)
+            sleep(1)
         else: 
             ser.write('0'.encode('utf-8'))
             print("LOCK TORPEDO")
-            # sleep(1)
+            sleep(1)
         serial.flush()
         sleep(0.1)
 
