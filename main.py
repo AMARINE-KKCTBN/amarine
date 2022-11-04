@@ -69,7 +69,9 @@ def runMissile(serial, isRelease):
     while True:
         print(isRelease.value)
         if isRelease.value == 1:
-            serial.write(1)
+            ser.write('1'.encode('utf-8'))
+        else: 
+            ser.write('0'.encode('utf-8'))
         serial.flush()
         sleep(0.1)
 
