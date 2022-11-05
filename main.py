@@ -108,11 +108,11 @@ def Protocol(data, isRunning, isRelease, isRunningThruster):
         elif left == 1 and last_value == 0 or left == 1 and last_value == 1:
             isRelease.value = 0
             isRunningThruster.value = 1
-        else:
+        elif left == 0 and last_value == 1:
             isRelease.value = 1
             release_status = 1
             isRunningThruster.value = 0
-
+        # else:
     last_value = left
     # left = 0
     # right = 0

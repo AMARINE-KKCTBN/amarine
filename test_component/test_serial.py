@@ -7,15 +7,15 @@ def serialCom():
     ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=None)
     while True:
         if True:
-            ser.write('1'.encode('utf-8'))
+            a = ser.write('1'.encode('utf-8'))
             ser.flush()
             sleep(0.1)
         else:
             ser.write('0'.encode('utf-8'))
             ser.flush()
             sleep(0.1)
-        ser.reset_input_buffer()
-        ser.reset_output_buffer()
+        # ser.reset_input_buffer()
+        # ser.reset_output_buffer()
 
 # def serialCom():
 #     ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=None)
