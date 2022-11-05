@@ -66,20 +66,20 @@ def runMainThruster(cnt, isRunning, isRunningThruster):
         sleep(0.1)
 
 def runMissile(isRelease):
-    serial = serial.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=None)
-    serial.reset_input_buffer()
-    serial.reset_output_buffer()
+    ser = ser.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=None)
+    ser.reset_input_buffer()
+    ser.reset_output_buffer()
     while True:
         print("IS RELEASEEEEE========", isRelease.value)
         if isRelease.value == 1:
-            serial.write('1'.encode('utf-8'))
-            serial.flush()
+            ser.write('1'.encode('utf-8'))
+            ser.flush()
             print("RELEASE TORPEDO")
         else: 
-            serial.write('0'.encode('utf-8'))
-            serial.flush()
+            ser.write('0'.encode('utf-8'))
+            ser.flush()
             print("LOCK TORPEDO")
-        serial.reset_output_buffer()
+        ser.reset_output_buffer()
         sleep(0.1)
 
 def Protocol(data, isRunning, isRelease, isRunningThruster):
@@ -128,13 +128,13 @@ def Protocol(data, isRunning, isRelease, isRunningThruster):
 
 
 def runSerialCommunication(isRunning, isRelease, isRunningThruster):
-    serial = serial.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=None)
-    serial.reset_input_buffer()
-    serial.reset_output_buffer()
+    ser = ser.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=None)
+    ser.reset_input_buffer()
+    ser.reset_output_buffer()
     while True:
         try:
-            if serial.in_waiting > 0:
-                data = serial.readline().decode('utf-8')
+            if ser.in_waiting > 0:
+                data = ser.readline().decode('utf-8')
                 print("DATA RECEIVE: ", data)
                 Protocol(data, isRunning, isRelease, isRunningThruster)
             else: 
