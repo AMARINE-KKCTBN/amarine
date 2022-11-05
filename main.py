@@ -157,8 +157,10 @@ def runServo(cnt, cx, isRunning, isRunningThruster):
 
 def runVision(vision, cx, isRunning):
     offset_x = 0.5
+    vision.enable_vertical_limiter(0, 0.5)
+    vision.enable_horizontal_limiter(0, 1)
     vision.visualize()
-    vision.record()
+    vision.stabilize()
     while True:
         if isRunning.value == 1:
             vision.main_process()
