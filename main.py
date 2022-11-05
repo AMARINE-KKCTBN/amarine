@@ -26,6 +26,7 @@ def Protocol(data, isRunning, isRelease, isRunningThruster):
     if data == '2':
         right = 0
         false_status = 0
+        true_status = 0
 
     else:
         if not false_status == 1:
@@ -33,6 +34,7 @@ def Protocol(data, isRunning, isRelease, isRunningThruster):
             if data == '0':
                 left = 0
                 true_status = 1
+                isRunning.value = 1
             else:
                 if true_status == 0:
                     false_status = 1
@@ -48,7 +50,6 @@ def Protocol(data, isRunning, isRelease, isRunningThruster):
         release_status = 0
 
     else:
-        isRunning.value = 1
         if left == 1 and last_value == 0 or left == 1 and last_value == 1:
             isRelease.value = 0
             isRunningThruster.value = 1
@@ -90,7 +91,7 @@ def runFourThruster(cnt, isRunning):
                     cnt.staticThruster(max_speed)
                     print("RUNNING STATIC 4 THRUSTER")
             else:
-                if last_value != isRunning.value and last_value == 1:
+                if last_value != isRunning.value:
                     for speed in range(max_speed, -1, -1):
                         cnt.staticThruster(speed)
                         sleep(0.1)
@@ -109,7 +110,7 @@ def runMainThruster(cnt, isRunning, isRunningThruster):
     try:
         while True:
             if isRunning.value == 1 and isRunningThruster.value == 1:
-                if last_value != isRunning.value:
+                if last_value != isRunningThruster.value :
                     for speed in range (min_speed, max_speed+1):
                         cnt.mainThruster(speed)
                         sleep(0.1)
@@ -117,14 +118,14 @@ def runMainThruster(cnt, isRunning, isRunningThruster):
                     cnt.mainThruster(max_speed)
                 print("RUNNING MAIN THRUSTER")
             else:
-                if last_value != isRunning.value and last_value == 1:
+                if last_value != isRunningThruster.value:
                     for speed in range(max_speed, -1, -1):
                         cnt.mainThruster(speed)
                         sleep(0.1)
                 else:
                     cnt.mainThruster(0)
                 # print("Stopping Main Thruster...")
-            last_value = isRunning.value
+            last_value = isRunningThruster.value
             sleep(0.1)
     except KeyboardInterrupt:
         exitProcess('runMainThruster')
@@ -133,7 +134,7 @@ def runMissile(port, isRelease):
     try:
         ser = serial.Serial(port, 9600, timeout=None)
         ser.reset_input_buffer()
-    except Exception as exeception:
+    except Exception as exception:
         print("Cannot open serial port at {}".format(port))
         exitProcess('runMissile')
     try:
@@ -154,7 +155,7 @@ def runSerialCommunication(port, isRunning, isRelease, isRunningThruster):
     try:
         ser = serial.Serial(port, 9600, timeout=None)
         ser.reset_input_buffer()
-    except Exception as exeception:
+    except Exception as exception:
         print("Cannot open serial port at {}".format(port))
         exitProcess('runSerialCommunication')
     try:
