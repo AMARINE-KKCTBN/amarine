@@ -65,20 +65,17 @@ def runMainThruster(cnt, isRunning, isRunningThruster):
         last_value = isRunning.value
         sleep(0.1)
 
-def runMissile(isRelease):
-    import serial
-    serials = serial.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=None)
+def runMissile(serial, isRelease):
     while True:
         print("IS RELEASEEEEE========", isRelease.value)
         if isRelease.value == 1:
-            serials.write('1'.encode('utf-8'))
-            serials.flush()
+            serial.write('1'.encode('utf-8'))
+            serial.flush()
             print("RELEASE TORPEDO")
         else: 
-            serials.write('0'.encode('utf-8'))
-            serials.flush()
+            serial.write('0'.encode('utf-8'))
+            serial.flush()
             print("LOCK TORPEDO")
-        serials.reset_output_buffer()
         sleep(0.1)
 
 def Protocol(data, isRunning, isRelease, isRunningThruster):
@@ -159,9 +156,8 @@ def runServo(cnt, cx, isRunning, isRunningThruster):
             print("Stopping Servo...")
         sleep(0.5)
 
-def runVision(cx, isRunning):
+def runVision(vision, cx, isRunning):
     offset_x = 0.5
-    vision = vision_lib.hsv_detector(camera_height=240, camera_width=320, masking_enabled=False)
     vision.visualize()
     vision.record()
     while True:
@@ -212,15 +208,16 @@ if __name__ == "__main__":
     )
     try:
         ser = serial.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=None)
+        vision = vision_lib.hsv_detector(camera_height=240, camera_width=320, masking_enabled=False)
         ser.reset_input_buffer()
         controller.initMainThruster()
 
-        runFourThruster_process = Process(target=runFourThruster ,args=(controller, isRunning))
-        runMainThruster_process = Process(target=runMainThruster ,args=(controller, isRunning, isRunningThruster))
-        runVision_process = Process(target=runVision, args=(coord_x, isRunning))
-        runServo_process = Process(target=runServo, args=(controller, coord_x, isRunning, isRunningThruster))
-        runSerialCommunication_thread = Process(target=runSerialCommunication, args=(ser, isRunning, isRelease, isRunningThruster))
-        runMissile_process = Process(target=runMissile, args=(isRelease))
+        runFourThruster_process = Process(target=runFourThruster ,args=(controller, isRunning, ))
+        runMainThruster_process = Process(target=runMainThruster ,args=(controller, isRunning, isRunningThruster, ))
+        runVision_process = Process(target=runVision, args=(vision, coord_x, isRunning, ))
+        runServo_process = Process(target=runServo, args=(controller, coord_x, isRunning, isRunningThruster, ))
+        runSerialCommunication_thread = Process(target=runSerialCommunication, args=(ser, isRunning, isRelease, isRunningThruster, ))
+        runMissile_process = Process(target=runMissile, args=(ser, isRelease, ))
         
         runMainThruster_process.start()
         runFourThruster_process.start()
