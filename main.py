@@ -1,5 +1,5 @@
 from threading import Thread
-from multiprocessing import Process, Value, Queue, Lock
+from multiprocessing import Process, Value, Queue
 from time import sleep
 import RPi.GPIO as GPIO
 from adafruit_servokit import ServoKit
@@ -65,15 +65,13 @@ def runMainThruster(cnt, isRunning, isRunningThruster):
         last_value = isRunning.value
         sleep(0.1)
 
-def runMissile(isRelease):
-    ser = ser.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=None)
-    ser.reset_input_buffer()
-    ser.reset_output_buffer()
+def runMissile(serial, isRelease, lock):
     while True:
         print("IS RELEASEEEEE========", isRelease.value)
         if isRelease.value == 1:
-            ser.write('1'.encode('utf-8'))
-            ser.flush()
+            lock.acquire()
+            serial.write('1'.encode('utf-8'))
+            lock.release()
             print("RELEASE TORPEDO")
         else: 
             ser.write('0'.encode('utf-8'))
@@ -195,6 +193,7 @@ if __name__ == "__main__":
     coord_x = Value('f', 0.0)
     last_value = 0
     release_status = 0
+    lock = Lock()
 
     thruster_run = 17
     main_thruster_speed = 10
@@ -221,8 +220,8 @@ if __name__ == "__main__":
         runMainThruster_process = Process(target=runMainThruster ,args=(controller, isRunning, isRunningThruster))
         runVision_process = Process(target=runVision, args=(coord_x, isRunning))
         runServo_process = Process(target=runServo, args=(controller, coord_x, isRunning))
-        runSerialCommunication_thread = Process(target=runSerialCommunication, args=(isRunning, isRelease, isRunningThruster))
-        runMissile_process = Process(target=runMissile, args=(isRelease, ))
+        runSerialCommunication_thread = Process(target=runSerialCommunication, args=(ser, isRunning, isRelease, isRunningThruster))
+        runMissile_process = Process(target=runMissile, args=(ser, isRelease, lock))
         
         runMainThruster_process.start()
         runFourThruster_process.start()
