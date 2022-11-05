@@ -65,19 +65,18 @@ def runMainThruster(cnt, isRunning, isRunningThruster):
         last_value = isRunning.value
         sleep(0.1)
 
-def runMissile(serial, isRelease, lock):
+def runMissile(serial, isRelease):
     while True:
         print("IS RELEASEEEEE========", isRelease.value)
         if isRelease.value == 1:
-            lock.acquire()
             serial.write('1'.encode('utf-8'))
-            lock.release()
+            serial.flush()
             print("RELEASE TORPEDO")
         else: 
-            ser.write('0'.encode('utf-8'))
-            ser.flush()
+            serial.write('0'.encode('utf-8'))
+            serial.flush()
             print("LOCK TORPEDO")
-        ser.reset_output_buffer()
+        serial.reset_output_buffer()
         sleep(0.1)
 
 def Protocol(data, isRunning, isRelease, isRunningThruster):
@@ -125,14 +124,11 @@ def Protocol(data, isRunning, isRelease, isRunningThruster):
     # if right == 1 and left == 0 and last_left == 1 -> run missile and stop all component
 
 
-def runSerialCommunication(isRunning, isRelease, isRunningThruster):
-    ser = ser.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=None)
-    ser.reset_input_buffer()
-    ser.reset_output_buffer()
+def runSerialCommunication(serial, isRunning, isRelease, isRunningThruster):
     while True:
         try:
-            if ser.in_waiting > 0:
-                data = ser.readline().decode('utf-8')
+            if serial.in_waiting > 0:
+                data = serial.readline().decode('utf-8')
                 print("DATA RECEIVE: ", data)
                 Protocol(data, isRunning, isRelease, isRunningThruster)
             else: 
@@ -193,7 +189,6 @@ if __name__ == "__main__":
     coord_x = Value('f', 0.0)
     last_value = 0
     release_status = 0
-    lock = Lock()
 
     thruster_run = 17
     main_thruster_speed = 10
@@ -214,6 +209,8 @@ if __name__ == "__main__":
         allServoPinConfig=[mainFin_servo, secondaryFin_servo],
     )
     try:
+        ser = serial.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=None)
+        ser.reset_input_buffer()
         controller.initMainThruster()
 
         runFourThruster_process = Process(target=runFourThruster ,args=(controller, isRunning))
@@ -221,7 +218,7 @@ if __name__ == "__main__":
         runVision_process = Process(target=runVision, args=(coord_x, isRunning))
         runServo_process = Process(target=runServo, args=(controller, coord_x, isRunning))
         runSerialCommunication_thread = Process(target=runSerialCommunication, args=(ser, isRunning, isRelease, isRunningThruster))
-        runMissile_process = Process(target=runMissile, args=(ser, isRelease, lock))
+        runMissile_process = Process(target=runMissile, args=(ser, isRelease))
         
         runMainThruster_process.start()
         runFourThruster_process.start()
