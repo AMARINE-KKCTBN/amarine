@@ -1,53 +1,51 @@
 import multiprocessing
-import threading
 from time import sleep
 import serial
+import sys
 
-def serialCom():
+def serialComSend():
     ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=None)
-    while True:
-        if True:
-            a = ser.write('1'.encode('utf-8'))
-            ser.flush()
-            sleep(0.1)
-        else:
-            ser.write('0'.encode('utf-8'))
-            ser.flush()
-            sleep(0.1)
-        # ser.reset_input_buffer()
-        # ser.reset_output_buffer()
+    status = 0
+    try:
+        while True:
+                if not status:
+                    ser.write('1\n'.encode('utf-8'))
+                else:
+                    ser.write('0\n'.encode('utf-8'))
+                status = not status
+                ser.flush()
+                sleep(1)
+    except KeyboardInterrupt:
+        print("Hello {}, hope you're well!".format("ABDAN"))
+        ser.close()
+        sys.exit(0)
 
-# def serialCom():
-#     ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=None)
-#     while True:
-#         if True:
-#             ser.write('1'.encode('utf-8'))
-#             ser.flush()
-#             sleep(0.1)
-#         else:
-#             ser.write('0'.encode('utf-8'))
-#             ser.flush()
-#             sleep(0.1)
-#         ser.reset_input_buffer()
-#         ser.reset_output_buffer()
+def serialComRec():
+    ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=None)
+    ser.reset_input_buffer()
+    try:
+        while True:
+                if ser.in_waiting > 0:
+                    data = ser.readline().decode('utf-8').rstrip()
+                    if data == '0':
+                        print(data)
+                else:
+                    print("NO DATA")
+                sleep(0.1)
+    except KeyboardInterrupt:
+        print("EXITING P2")  
+        ser.close()  
+        sys.exit(0)
 
 if __name__ == '__main__':
 
-    # serialCom(ser)
-    p1 = multiprocessing.Process(target=serialCom, args=())
-    # p1 = threading.Thread(target=serialCom, args=(ser))
+    p1 = multiprocessing.Process(target=serialComSend, args=())
+    p2 = multiprocessing.Process(target=serialComRec, args=())
 
     p1.start()
+    p2.start()
     p1.join()
-        # if ser.in_waiting > 0:
-        #     line = ser.readline().decode('utf-8')
-        #     # data_left = ser.in_waiting
-        #     # line+=str(data_left)
-        #     print(line)
-            # if line+=data_left.readline().decode('utf-8') == "1\r\n":
-            #     print("SATU")
-            # else:
-            #     print("NOL")
-            # else:
-            
-            
+    p2.join()
+
+
+      
