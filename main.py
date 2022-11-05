@@ -5,7 +5,7 @@ import RPi.GPIO as GPIO
 from adafruit_servokit import ServoKit
 from controller import controller as cntrl
 from vision import vision_lib
-import serial
+import serial 
 from ctypes import c_bool, c_float, c_int
 
 # runFourThruster
@@ -65,18 +65,20 @@ def runMainThruster(cnt, isRunning, isRunningThruster):
         last_value = isRunning.value
         sleep(0.1)
 
-def runMissile(serial, isRelease):
+def runMissile(isRelease):
+    import serial
+    serials = serial.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=None)
     while True:
         print("IS RELEASEEEEE========", isRelease.value)
         if isRelease.value == 1:
-            serial.write('1'.encode('utf-8'))
-            serial.flush()
+            serials.write('1'.encode('utf-8'))
+            serials.flush()
             print("RELEASE TORPEDO")
         else: 
-            serial.write('0'.encode('utf-8'))
-            serial.flush()
+            serials.write('0'.encode('utf-8'))
+            serials.flush()
             print("LOCK TORPEDO")
-        serial.reset_output_buffer()
+        serials.reset_output_buffer()
         sleep(0.1)
 
 def Protocol(data, isRunning, isRelease, isRunningThruster):
@@ -138,10 +140,10 @@ def runSerialCommunication(serial, isRunning, isRelease, isRunningThruster):
             print("There's problem with serial communication!", exception)
         sleep(0.1)
 
-def runServo(cnt, cx, isRunning):
+def runServo(cnt, cx, isRunning, isRunningThruster):
     coord_x = 0
     while True:
-        if isRunning.value == 1:
+        if isRunning.value == 1 and isRunningThruster.value == 1:
             coord_x = cx.value
             if coord_x >= -0.200 and coord_x <= 0.200:
                 cnt.forward()
@@ -216,9 +218,9 @@ if __name__ == "__main__":
         runFourThruster_process = Process(target=runFourThruster ,args=(controller, isRunning))
         runMainThruster_process = Process(target=runMainThruster ,args=(controller, isRunning, isRunningThruster))
         runVision_process = Process(target=runVision, args=(coord_x, isRunning))
-        runServo_process = Process(target=runServo, args=(controller, coord_x, isRunning))
+        runServo_process = Process(target=runServo, args=(controller, coord_x, isRunning, isRunningThruster))
         runSerialCommunication_thread = Process(target=runSerialCommunication, args=(ser, isRunning, isRelease, isRunningThruster))
-        runMissile_process = Process(target=runMissile, args=(ser, isRelease))
+        runMissile_process = Process(target=runMissile, args=(isRelease))
         
         runMainThruster_process.start()
         runFourThruster_process.start()
