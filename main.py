@@ -53,7 +53,7 @@ def runMainThruster(cnt, isRunning, isRunningThruster):
                     sleep(0.1)
             else:
                 cnt.mainThruster(max_speed)
-            print("RUNNING THRUSTER?????????????????????????")
+            print("RUNNING THRUSTER")
         else:
             if last_value != isRunning.value:
                 for speed in range(max_speed, -1, -1):
@@ -65,20 +65,21 @@ def runMainThruster(cnt, isRunning, isRunningThruster):
         last_value = isRunning.value
         sleep(0.1)
 
-def runMissile(serial, isRelease, lock):
+def runMissile(isRelease):
+    serial = serial.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=None)
+    serial.reset_input_buffer()
+    serial.reset_output_buffer()
     while True:
         print("IS RELEASEEEEE========", isRelease.value)
         if isRelease.value == 1:
-            lock.acquire()
             serial.write('1'.encode('utf-8'))
-            lock.release()
+            serial.flush()
             print("RELEASE TORPEDO")
-            # sleep(1)
         else: 
             serial.write('0'.encode('utf-8'))
+            serial.flush()
             print("LOCK TORPEDO")
-            # sleep(1)  
-        serial.flush()
+        serial.reset_output_buffer()
         sleep(0.1)
 
 def Protocol(data, isRunning, isRelease, isRunningThruster):
@@ -100,6 +101,9 @@ def Protocol(data, isRunning, isRelease, isRunningThruster):
 
     if right == 0:
         isRunning.value = 0
+        isRelease.value = 0
+        isRunningThruster.value = 0
+        release_status = 0
     else:
         isRunning.value = 1
         if left == 0 and last_value == 0 and release_status == 0:
@@ -123,25 +127,16 @@ def Protocol(data, isRunning, isRelease, isRunningThruster):
     # if right == 1 and left == 0 and last_left == 1 -> run missile and stop all component
 
 
-def runSerialCommunication(serial, isRunning, isRelease, isRunningThruster):
+def runSerialCommunication(isRunning, isRelease, isRunningThruster):
+    serial = serial.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=None)
+    serial.reset_input_buffer()
+    serial.reset_output_buffer()
     while True:
         try:
             if serial.in_waiting > 0:
                 data = serial.readline().decode('utf-8')
                 print("DATA RECEIVE: ", data)
                 Protocol(data, isRunning, isRelease, isRunningThruster)
-                # if data == "1\r\n":
-                #     pass
-                # elif data == "3=\r\n":
-                #     isRunning.value = 1
-                #     print("RUNNING THRUSTER")
-                #     pass
-                # elif data == "4\r\n":
-                #     isRunning.value = 0                    
-                #     print("STOP THRUSTER")
-                #     pass
-                # else:
-                #     pass
             else: 
                 print("Initiation of serial communication...")
 
@@ -168,8 +163,9 @@ def runServo(cnt, cx, isRunning):
             print("Stopping Servo...")
         sleep(0.5)
 
-def runVision(vision, cx, isRunning):
+def runVision(cx, isRunning):
     offset_x = 0.5
+    vision = vision_lib.hsv_detector(camera_height=240, camera_width=320, masking_enabled=False)
     vision.visualize()
     vision.record()
     while True:
@@ -199,7 +195,6 @@ if __name__ == "__main__":
     coord_x = Value('f', 0.0)
     last_value = 0
     release_status = 0
-    lock = Lock()
 
     thruster_run = 17
     main_thruster_speed = 10
@@ -219,19 +214,15 @@ if __name__ == "__main__":
         mainThrusterPinConfig=mainProp,
         allServoPinConfig=[mainFin_servo, secondaryFin_servo],
     )
-    ser = serial.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=None)
     try:
-        vision = vision_lib.hsv_detector(camera_height=240, camera_width=320, masking_enabled=False)
-        ser.reset_input_buffer()
-
         controller.initMainThruster()
 
         runFourThruster_process = Process(target=runFourThruster ,args=(controller, isRunning))
         runMainThruster_process = Process(target=runMainThruster ,args=(controller, isRunning, isRunningThruster))
-        runVision_process = Process(target=runVision, args=(vision, coord_x, isRunning))
+        runVision_process = Process(target=runVision, args=(coord_x, isRunning))
         runServo_process = Process(target=runServo, args=(controller, coord_x, isRunning))
-        runSerialCommunication_thread = Process(target=runSerialCommunication, args=(ser, isRunning, isRelease, isRunningThruster))
-        runMissile_process = Process(target=runMissile, args=(ser, isRelease, lock))
+        runSerialCommunication_thread = Process(target=runSerialCommunication, args=(isRunning, isRelease, isRunningThruster))
+        runMissile_process = Process(target=runMissile, args=(isRelease, ))
         
         runMainThruster_process.start()
         runFourThruster_process.start()
@@ -247,70 +238,9 @@ if __name__ == "__main__":
         runSerialCommunication_thread.join()
         runMissile_process.join()
 
-        # runMainThruster_process = threading.Thread(target=runMainThruster, args=(controller, ser, isRunning))
-        # thrusterRun_process.start()
-        # runMainThruster_process.start()
-        # thrusterRun_process.join()
-        # runMainThruster_process.join()
-
-        # MULTIPROCESS=========
-        # MAIN PROCESS
-
-        # shutdown_program_thread = multiprocessing.Process(target=shutdownProgram, args=(isRunning,))
-        # buttonThruster_thread = multiprocessing.Process(target=thrusterSpeedButton, args=(thruster_speed, isRunning, ))
-        # mainFin_servo_thread = multiprocessing.Process(target=servoRunning, args=(controller, coord_x, isRunning))
-        
-        # vision_process = multiprocessing.Process(target=objectDetection, args=(vision, coord_x, isRunning))
-        
-        # runMainThruster_thread = threading.Thread(target=runMainThruster, args=(controller, ser, isRunning))
-        # # runMissile_thread = threading.Thread(target=runMissile, args=())
-        # def threadPool():
-        #     threads = [runThruster_thread, buttonThruster_thread, mainFin_servo_thread]
-        #     for thread in threads:
-        #         thread.start()
-        #     for thread in threads:
-        #         thread.join()
-
-        # def runMainThrusterThread():
-        #     global ser, controller
-        #     # runMainThruster_thread = multiprocessing.Process(target=runMainThruster, args=(controller, serial))
-        #     runMainThruster_thread.start()
-        #     runMainThruster_thread.join()
-
-        # with multiprocessing.Pool() as multiprocess_executor:
-        #     multiprocess_executor.apply(threadPool)
-        #     multiprocess_executor.apply(runMainThruster, controller, ser)
-            # multiprocess_executor.apply(objectDetection, vision, coord_x)
-            # executor.submit(runThruster, controller)
-            # executor.submit(runMainThruster, controller, ser)
-            # executor.submit(thrusterSpeedButton)
-            # executor.submit(servoRunning, controller, coord_x)
-
-        # threads.append()
-
-        # VISION PROCESS
-
-        # MULTIPROCESS=========
-
-        # RUN THREAD & PROCESS
-        # vision_process.start()
-        # runThruster_thread.start()
-        # runMainThruster_thread.start()
-        # buttonThruster_thread.start()
-        # mainFin_servo_thread.start()
-        # shutdown_program_thread.start()
-        
-        # vision_process.join()
-        # runMainThruster_thread.join()
-        # runThruster_thread.join()
-        # buttonThruster_thread.join()
-        # shutdown_program_thread.join()
-        # mainFin_servo_thread.join()
-
     except Exception as ex:
         print("CANNOT OPEN CAMERA OR SERIAL PORT!")
         print(ex)
-        ser.close()
         raise SystemExit
 
     
