@@ -147,7 +147,7 @@ def runMissile(port, isRelease):
                 print("LOCK TORPEDO")
             sleep(1)
     except KeyboardInterrupt: 
-        print("Closing Serial Port... (/dev/ttyUSB0)")
+        print("Closing Serial Port... (/dev/ttyUSB0) at sending Data")
         ser.close()
         exitProcess('runMissile')
 
@@ -168,6 +168,8 @@ def runSerialCommunication(port, isRunning, isRelease, isRunningThruster):
                     print("Initiation of serial communication or empty data...")
                 sleep(0.1)
     except KeyboardInterrupt:
+        print("Closing Serial Port... (/dev/ttyUSB0) at Receive Data")
+        ser.close()
         exitProcess('runSerialCommunication')
 
 def runServo(cnt, cx, isRunning, isRunningThruster):
