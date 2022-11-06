@@ -5,6 +5,7 @@ vision = vision_lib.hsv_detector(camera_height=9999, camera_width=9999)
 vision.enable_vertical_limiter(0, 0.5)
 vision.enable_horizontal_limiter(0, 1)
 vision.enable_radius_limiter(0.3, 0.5)
+vision.enable_contours_mode()
 vision.visualize()
 vision.stabilize()
 vision.record()
@@ -15,7 +16,7 @@ while True:
         coord_x = -1
     else:
         coord_x -= offset_x
-    print("coord: " + str(vision.get_circle_coord()) + " | output: " + str(coord_x) + " | size: " + )
+    print("coord: " + str(vision.get_circle_coord()) + " | output: " + str(coord_x)) #+ " | size: " + )
         
     if not vision.show_image():
        break 

@@ -3,7 +3,7 @@ import numpy as np
 import json
 
 class hsv_detector:
-    def __init__(self, camera_height = 320, camera_width = 240, radius_limiter = False, stabilizer_enabled = False, masking_enabled = False, record_enabled = False, visualization_enabled = False, vertical_limiter = False, horizontal_limiter = False):
+    def __init__(self, camera_height = 320, camera_width = 240, detect_contours_mode = False, radius_limiter = False, stabilizer_enabled = False, masking_enabled = False, record_enabled = False, visualization_enabled = False, vertical_limiter = False, horizontal_limiter = False):
         self.object_hsv_path = 'vision/object_hsv.json'
         self.field_hsv_path = 'vision/field_hsv.json'
         self.circle_params_path = 'vision/circle_params.json'
@@ -25,6 +25,8 @@ class hsv_detector:
         self.record_enabled = record_enabled
         self.stabilizer_enabled = stabilizer_enabled
         
+        self.detect_contours_mode = detect_contours_mode
+
         self.vertical_limiter = vertical_limiter
         self.horizontal_limiter = horizontal_limiter
         self.radius_limiter = radius_limiter
@@ -191,7 +193,23 @@ class hsv_detector:
             if coord_obj is not None:
                 cv2.circle(self.image_output, (coord_obj[0], coord_obj[1]), coord_obj[2], (0, 255, 0), 2)
                 cv2.circle(self.image_output, (coord_obj[0], coord_obj[1]), 2, (255, 0, 0), 3)
-                
+
+    def detect_contours(self):
+        _,object_contours,h=cv2.findContours(self.object_mask.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+        cv2.drawContours(self.image_output,object_contours,-1,(255,0,0),3)
+        for i in range(len(object_contours)):
+            object_moments = cv2.moments(object_contours[i])
+            x,y,w,h=cv2.boundingRect(object_contours[i])
+            if object_moments["m00"] != 0:
+                self.circle_x = int(object_moments["m10"] / object_moments["m00"])
+                self.circle_y = int(object_moments["m01"] / object_moments["m00"])
+            else:
+                self.circle_x = -1
+                self.circle_y = -1
+            cv2.rectangle(self.image_output,(x,y),(x+w,y+h),(0,0,255), 2)
+            cv2.circle(self.image_output, (self.circle_x, self.circle_y), 5, (255, 255, 255), -1)
+            cv2.putText(self.image_output, str(i+1),(x,y+h),cv2.FONT_HERSHEY_SIMPLEX,1.0,(0,255,255))
+
     def stabilizer(self):
         if self.circle_x != -1:
             if self.output_x != -1:
@@ -256,7 +274,10 @@ class hsv_detector:
         if self.masking_enabled:
             self.field_masking()
         
-        self.detect_circle_object()
+        if self.detect_contours_mode:
+            self.detect_contours()
+        else:
+            self.detect_circle_object()
         
         if self.stabilizer_enabled:
             self.stabilizer()
@@ -290,6 +311,9 @@ class hsv_detector:
     
     def record(self):
         self.record_enabled = True
+
+    def enable_contours_mode(self):
+        self.detect_contours_mode = True
                   
     def get_circle_coord(self):
         return self.circle_x, self.circle_y, self.circle_z
