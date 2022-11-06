@@ -6,175 +6,217 @@ from adafruit_servokit import ServoKit
 from controller import controller as cntrl
 from vision import vision_lib
 import serial 
+import sys
 from ctypes import c_bool, c_float, c_int
 
+# FUNCTION LIST
 # runFourThruster
 # runMainThruster
 # runVision
 # runServo
 # runSerCommunication
+# Protocol
+# exitProcess
 
-def runFourThruster(cnt, isRunning):
-    last_value = 0
-    max_speed = 15
-    min_speed = 1
-    while True:
-        if isRunning.value == 1:
-            if last_value != isRunning.value:
-                for speed in range (min_speed, max_speed+1):
-                    cnt.staticThruster(speed)
-                    sleep(0.1)
-                print("DYNAMIC 1====================================")
-            else:
-                cnt.staticThruster(max_speed)
-                print("RUNNING STATIC 4 THRUSTER")
-        else:
-            if last_value != isRunning.value:
-                for speed in range(max_speed, -1, -1):
-                    cnt.staticThruster(speed)
-                    sleep(0.1)
-                print("DYNAMIC 0===================================")
-            else:
-                print("STATIC 0")
-                cnt.staticThruster(0)
-                print("Stopping 4 Thruster...")
-        last_value = isRunning.value
-        sleep(0.1)
-
-def runMainThruster(cnt, isRunning, isRunningThruster):
-    last_value = 0
-    max_speed = 10
-    min_speed = 1
-    while True:
-        if isRunning.value == 1 and isRunningThruster.value == 1:
-            if last_value != isRunning.value:
-                for speed in range (min_speed, max_speed+1):
-                    cnt.mainThruster(speed)
-                    sleep(0.1)
-            else:
-                cnt.mainThruster(max_speed)
-            print("RUNNING THRUSTER")
-        else:
-            if last_value != isRunning.value:
-                for speed in range(max_speed, -1, -1):
-                    cnt.mainThruster(speed)
-                    sleep(0.1)
-            else:
-                cnt.mainThruster(0)
-            print("Stopping Main Thruster...")
-        last_value = isRunning.value
-        sleep(0.1)
-
-def runMissile(serial, isRelease):
-    while True:
-        print("IS RELEASEEEEE========", isRelease.value)
-        if isRelease.value == 1:
-            serial.write('1'.encode('utf-8'))
-            serial.flush()
-            print("RELEASE TORPEDO")
-        else: 
-            serial.write('0'.encode('utf-8'))
-            serial.flush()
-            print("LOCK TORPEDO")
-        sleep(0.1)
-
-def Protocol(data, isRunning, isRelease, isRunningThruster):
-    global last_value, release_status
+def Protocol(data, isRunning, isRelease, isRunningThruster): 
+    global last_value, release_status, false_status, true_status
     right = 0
     left = 0
 
-    print("LAST_VALUE================================", last_value)
-
-    if data == '2\r\n':
+    if data == '2':
         right = 0
+        false_status = 0
+        true_status = 0
+
     else:
-        right = 1
-        if data == '0\r\n':
-            left = 0
+        if not false_status == 1:
+            right = 1
+            if data == '0':
+                left = 0
+                true_status = 1
+                isRunning.value = 1
+            else:
+                if true_status == 0:
+                    false_status = 1
+                else:
+                    left = 1
         else:
-            left = 1
-        print("DATA RECEIVE===============================", data, left)
+            print("Please Reset The Right Switch...")
 
     if right == 0:
         isRunning.value = 0
         isRelease.value = 0
         isRunningThruster.value = 0
         release_status = 0
+
     else:
-        isRunning.value = 1
-        if left == 0 and last_value == 0 and release_status == 0:
-            isRelease.value = 0
-            isRunningThruster.value = 0
-        elif left == 1 and last_value == 0 or left == 1 and last_value == 1:
+        if left == 1 and last_value == 0 or left == 1 and last_value == 1:
             isRelease.value = 0
             isRunningThruster.value = 1
-        # elif left == 0 and last_value == 1:
-        else:
+        elif left == 0 and last_value == 1:
             isRelease.value = 1
             release_status = 1
             isRunningThruster.value = 0
+        else:
+            if release_status == 1:
+                false_status = 1
+            isRelease.value = 0
+            isRunningThruster.value = 0
 
     last_value = left
+
     # left = 0
     # right = 0
     # if right == 0 and left == 0 -> standby program
-    # if right == 1 and left == 0 and last_left == 0 -> running cv and servo or with 4 thruster
-    # if right == 1 and left == 1 and last_left == 0 -> running cv and servo or with 4 thruster and runMainThruster
-    # if right == 1 and left == 0 and last_left == 1 -> run missile and stop all component
+    # if right == 1 and left == 0 and last_left == 0 -> running cv and with 4 thruster
+    # if right == 1 and left == 1 and last_left == 0 -> running cv, servo, with 4 thruster, and runMainThruster
+    # if right == 1 and left == 0 and last_left == 1 -> run missile and stop all component except 4 thruster and cv
 
+def exitProcess(pName):
+    print("Exiting {} process...".format(pName))
+    sys.exit(0)
 
-def runSerialCommunication(serial, isRunning, isRelease, isRunningThruster):
-    while True:
-        try:
-            if serial.in_waiting > 0:
-                data = serial.readline().decode('utf-8')
-                print("DATA RECEIVE: ", data)
-                Protocol(data, isRunning, isRelease, isRunningThruster)
-            else: 
-                print("Initiation of serial communication...")
+def runFourThruster(cnt, isRunning):
+    last_value = 0
+    max_speed = 15
+    min_speed = 1
+    try:
+        while True:
+            if isRunning.value == 1:
+                if last_value != isRunning.value:
+                    for speed in range (min_speed, max_speed+1):
+                        cnt.staticThruster(speed)
+                        sleep(0.1)
+                else:
+                    cnt.staticThruster(max_speed)
+                    print("RUNNING STATIC 4 THRUSTER")
+            else:
+                if last_value != isRunning.value:
+                    for speed in range(max_speed, -1, -1):
+                        cnt.staticThruster(speed)
+                        sleep(0.1)
+                else:
+                    cnt.staticThruster(0)
+                    # print("Stopping 4 Thruster...")
+            last_value = isRunning.value
+            sleep(0.1)
+    except KeyboardInterrupt:
+        exitProcess('runFourThruster')
 
-        except Exception as exception:
-            print("There's problem with serial communication!", exception)
-        sleep(0.1)
+def runMainThruster(cnt, isRunning, isRunningThruster):
+    last_value = 0
+    max_speed = 10
+    min_speed = 1
+    try:
+        while True:
+            if isRunning.value == 1 and isRunningThruster.value == 1:
+                if last_value != isRunningThruster.value :
+                    for speed in range (min_speed, max_speed+1):
+                        cnt.mainThruster(speed)
+                        sleep(0.1)
+                else:
+                    cnt.mainThruster(max_speed)
+                print("RUNNING MAIN THRUSTER")
+            else:
+                if last_value != isRunningThruster.value:
+                    for speed in range(max_speed, -1, -1):
+                        cnt.mainThruster(speed)
+                        sleep(0.1)
+                else:
+                    cnt.mainThruster(0)
+                # print("Stopping Main Thruster...")
+            last_value = isRunningThruster.value
+            sleep(0.1)
+    except KeyboardInterrupt:
+        exitProcess('runMainThruster')
+    
+def runMissile(port, isRelease):
+    try:
+        ser = serial.Serial(port, 9600, timeout=None)
+        ser.reset_input_buffer()
+    except Exception as exception:
+        print("Cannot open serial port at {}".format(port))
+        exitProcess('runMissile')
+    try:
+        while True:
+            if isRelease.value == 1:
+                serial.write('1\n'.encode('utf-8'))
+                print("RELEASE TORPEDO")
+            # else: 
+            #     serial.write('0\n'.encode('utf-8'))
+                print("LOCK TORPEDO")
+            sleep(1)
+    except KeyboardInterrupt: 
+        print("Closing Serial Port... (/dev/ttyUSB0)")
+        ser.close()
+        exitProcess('runMissile')
+
+def runSerialCommunication(port, isRunning, isRelease, isRunningThruster):
+    try:
+        ser = serial.Serial(port, 9600, timeout=None)
+        ser.reset_input_buffer()
+    except Exception as exception:
+        print("Cannot open serial port at {}".format(port))
+        exitProcess('runSerialCommunication')
+    try:
+        while True:
+                if ser.in_waiting > 0:
+                    data = ser.readline().decode('utf-8').rstrip()
+                    print("DATA RECEIVE: ", data)
+                    Protocol(data, isRunning, isRelease, isRunningThruster)
+                else: 
+                    print("Initiation of serial communication or empty data...")
+                sleep(0.1)
+    except KeyboardInterrupt:
+        exitProcess('runSerialCommunication')
 
 def runServo(cnt, cx, isRunning, isRunningThruster):
     coord_x = 0
-    while True:
-        if isRunning.value == 1 and isRunningThruster.value == 1:
-            coord_x = cx.value
-            if coord_x >= -0.200 and coord_x <= 0.200:
-                cnt.forward()
-                print("FORWARD")
-            elif coord_x > 0.200:
-                cnt.right()
-                print("RIGHT")
+    try:
+        while True:
+            if isRunning.value == 1 and isRunningThruster.value == 1:
+                coord_x = cx.value
+                if coord_x >= -0.200 and coord_x <= 0.200:
+                    cnt.forward()
+                    print("FORWARD")
+                elif coord_x > 0.200:
+                    cnt.right()
+                    print("RIGHT")
+                else:
+                    cnt.left()            
+                    print("LEFT")
             else:
-                cnt.left()            
-                print("LEFT")
-        else:
-            cnt.forward()
-            print("Stopping Servo...")
-        sleep(0.5)
-
+                cnt.forward()
+                # print("Stopping Servo...")
+            sleep(0.1)
+    except KeyboardInterrupt:
+        exitProcess("runServo")
+ 
 def runVision(vision, cx, isRunning):
     offset_x = 0.5
+    vision.enable_vertical_limiter(0, 0.5)
+    vision.enable_horizontal_limiter(0, 1)
     vision.visualize()
-    vision.record()
-    while True:
-        if isRunning.value == 1:
-            vision.main_process()
-            coord_x, coord_y, coord_z = vision.get_circle_coord()
-            if coord_x < 0:
-                coord_x = -1
+    vision.stabilize()
+    try:
+        while True:
+            if isRunning.value == 1:
+                vision.main_process()
+                coord_x, coord_y, coord_z = vision.get_circle_coord()
+                if coord_x < 0:
+                    coord_x = -1
+                else:
+                    coord_x -= offset_x
+                print("coord(x,y,z): " + str(vision.get_circle_coord()))
+                cx.value = coord_x
+                # if not vision.show_image():
+                #     break 
             else:
-                coord_x -= offset_x
-            print("coord(x,y,z): " + str(vision.get_circle_coord()))
-            cx.value = coord_x
-            # if not vision.show_image():
-            #     break 
-        else:
-            print("Stopping Vision...")
-        sleep(0.1)
+                pass
+                # print("Stopping Vision...")
+            sleep(0.1)
+    except KeyboardInterrupt:
+        exitProcess("runVision")
 
 if __name__ == "__main__":
 
@@ -185,11 +227,12 @@ if __name__ == "__main__":
     isRelease = Value('i', 0)
     isRunningThruster = Value('i', 0)
     coord_x = Value('f', 0.0)
+
     last_value = 0
     release_status = 0
-
-    thruster_run = 17
-    main_thruster_speed = 10
+    false_status = 0
+    true_status = 0
+    serial_port = '/dev/ttyUSB0'
 
     # I2C PIN CONFIGURATION
     leftFrontProp = pca.continuous_servo[0]
@@ -207,17 +250,15 @@ if __name__ == "__main__":
         allServoPinConfig=[mainFin_servo, secondaryFin_servo],
     )
     try:
-        ser = serial.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=None)
         vision = vision_lib.hsv_detector(camera_height=240, camera_width=320, masking_enabled=False)
-        ser.reset_input_buffer()
         controller.initMainThruster()
 
         runFourThruster_process = Process(target=runFourThruster ,args=(controller, isRunning, ))
         runMainThruster_process = Process(target=runMainThruster ,args=(controller, isRunning, isRunningThruster, ))
         runVision_process = Process(target=runVision, args=(vision, coord_x, isRunning, ))
         runServo_process = Process(target=runServo, args=(controller, coord_x, isRunning, isRunningThruster, ))
-        runSerialCommunication_thread = Process(target=runSerialCommunication, args=(ser, isRunning, isRelease, isRunningThruster, ))
-        runMissile_process = Process(target=runMissile, args=(ser, isRelease, ))
+        runSerialCommunication_thread = Process(target=runSerialCommunication, args=(serial_port, isRunning, isRelease, isRunningThruster, ))
+        runMissile_process = Process(target=runMissile, args=(serial_port, isRelease, ))
         
         runMainThruster_process.start()
         runFourThruster_process.start()
@@ -236,7 +277,7 @@ if __name__ == "__main__":
     except Exception as ex:
         print("CANNOT OPEN CAMERA OR SERIAL PORT!")
         print(ex)
-        raise SystemExit
+        sys.exit(0)
 
     
     
