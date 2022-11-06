@@ -58,7 +58,7 @@ def Protocol(data, isRunning, isRelease, isRunningThruster):
             release_status = 1
             isRunningThruster.value = 0
         else:
-            if release_status == 1:
+            if release_status == 1 and left == 0 and last_value == 0:
                 false_status = 1
                 isRelease.value = 1
                 isRunningThruster.value = 0
@@ -145,9 +145,10 @@ def runMissile(port, isRelease):
             if isRelease.value == 1:
                 ser.write('1\n'.encode('utf-8'))
                 print("================================================================RELEASE TORPEDO")
-            # else: 
-            #     serial.write('0\n'.encode('utf-8'))
-                print("LOCK TORPEDO")
+            else: 
+                ser.write('0\n'.encode('utf-8'))
+                print("================================================================LOCK TORPEDO")
+            ser.flush()
             sleep(1)
     except KeyboardInterrupt: 
         print("Closing Serial Port... (/dev/ttyUSB0) at sending Data")
@@ -203,6 +204,7 @@ def runVision(vision, cx, isRunning):
     vision.enable_horizontal_limiter(0, 1)
     vision.visualize()
     vision.stabilize()
+    vision.record()
     try:
         while True:
             if isRunning.value == 1:
@@ -214,8 +216,8 @@ def runVision(vision, cx, isRunning):
                     coord_x -= offset_x
                 print("coord(x,y,z): " + str(vision.get_circle_coord()))
                 cx.value = coord_x
-                # if not vision.show_image():
-                #     break 
+                if not vision.show_image():
+                    break 
             else:
                 pass
                 # print("Stopping Vision...")
