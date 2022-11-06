@@ -147,7 +147,7 @@ def runMissile(port, isRelease):
                 print("================================================================RELEASE TORPEDO")
             # else: 
             #     serial.write('0\n'.encode('utf-8'))
-                print("LOCK TORPEDO")
+                print("=======================================================LOCK TORPEDO")
             sleep(1)
     except KeyboardInterrupt: 
         print("Closing Serial Port... (/dev/ttyUSB0) at sending Data")
