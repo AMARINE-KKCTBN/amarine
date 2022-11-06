@@ -60,7 +60,7 @@ def Protocol(data, isRunning, isRelease, isRunningThruster):
         else:
             if release_status == 1:
                 false_status = 1
-            isRelease.value = 0
+            isRelease.value = 1
             isRunningThruster.value = 0
 
     last_value = left
@@ -140,8 +140,8 @@ def runMissile(port, isRelease):
     try:
         while True:
             if isRelease.value == 1:
-                serial.write('1\n'.encode('utf-8'))
-                print("RELEASE TORPEDO")
+                ser.write('1\n'.encode('utf-8'))
+                print("================================================================RELEASE TORPEDO")
             # else: 
             #     serial.write('0\n'.encode('utf-8'))
                 print("LOCK TORPEDO")
