@@ -195,20 +195,40 @@ class hsv_detector:
                 cv2.circle(self.image_output, (coord_obj[0], coord_obj[1]), 2, (255, 0, 0), 3)
 
     def detect_contours(self):
-        _,object_contours,h=cv2.findContours(self.object_mask.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+        object_contours,h=cv2.findContours(self.object_mask.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
         cv2.drawContours(self.image_output,object_contours,-1,(255,0,0),3)
+        
+        biggest_radius = 0
+        biggest_x = -1
+        biggest_y = -1
+        biggest_w = -1
+        biggest_h = -1
+        
+        self.circle_x = -1
+        self.circle_y = -1
+        self.circle_z = -1
         for i in range(len(object_contours)):
             object_moments = cv2.moments(object_contours[i])
             x,y,w,h=cv2.boundingRect(object_contours[i])
-            if object_moments["m00"] != 0:
-                self.circle_x = int(object_moments["m10"] / object_moments["m00"])
-                self.circle_y = int(object_moments["m01"] / object_moments["m00"])
-            else:
-                self.circle_x = -1
-                self.circle_y = -1
+            temp_x = int(object_moments["m10"] / object_moments["m00"])
+            temp_y = int(object_moments["m01"] / object_moments["m00"])
+            if object_moments["m00"] >= biggest_radius:
+                self.circle_x = round(temp_x / self.camera_width * 2 - 1, 3)
+                self.circle_y = round(temp_y / self.camera_height * 2 - 1, 3)
+                biggest_radius = object_moments["m00"]
+                self.circle_z = biggest_radius
+                biggest_x = x
+                biggest_y = y
+                biggest_w = w
+                biggest_h = h
+            # else:
             cv2.rectangle(self.image_output,(x,y),(x+w,y+h),(0,0,255), 2)
-            cv2.circle(self.image_output, (self.circle_x, self.circle_y), 5, (255, 255, 255), -1)
+            cv2.circle(self.image_output, (temp_x, temp_y), 5, (255, 255, 255), -1)
             cv2.putText(self.image_output, str(i+1),(x,y+h),cv2.FONT_HERSHEY_SIMPLEX,1.0,(0,255,255))
+        
+        cv2.rectangle(self.image_output,(biggest_x,biggest_y),(biggest_x+biggest_w,biggest_y+biggest_h),(0,255,0), 2)
+        cv2.circle(self.image_output, (temp_x, temp_y), 5, (255, 0, 0), -1)
+        cv2.putText(self.image_output, "Selected",(biggest_x,biggest_y+biggest_h),cv2.FONT_HERSHEY_SIMPLEX,1.0,(0,255,0))
 
     def stabilizer(self):
         if self.circle_x != -1:
