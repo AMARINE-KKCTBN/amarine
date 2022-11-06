@@ -1,10 +1,9 @@
 import cv2
 import numpy as np
 import json
-import math
 
 class hsv_detector:
-    def __init__(self, camera_height = 320, camera_width = 240, stabilizer_enabled = False, masking_enabled = False, record_enabled = False, visualization_enabled = False, vertical_limiter = False, horizontal_limiter = False):
+    def __init__(self, camera_height = 320, camera_width = 240, detect_contours_mode = False, radius_limiter = False, stabilizer_enabled = False, masking_enabled = False, record_enabled = False, visualization_enabled = False, vertical_limiter = False, horizontal_limiter = False):
         self.object_hsv_path = 'vision/object_hsv.json'
         self.field_hsv_path = 'vision/field_hsv.json'
         self.circle_params_path = 'vision/circle_params.json'
@@ -26,14 +25,20 @@ class hsv_detector:
         self.record_enabled = record_enabled
         self.stabilizer_enabled = stabilizer_enabled
         
+        self.detect_contours_mode = detect_contours_mode
+
         self.vertical_limiter = vertical_limiter
         self.horizontal_limiter = horizontal_limiter
+        self.radius_limiter = radius_limiter
         
         self.vertical_upper_limit = 0.5
         self.vertical_lower_limit = 0
         
         self.horizontal_upper_limit = 1
         self.horizontal_lower_limit = 0
+        
+        self.radius_upper_limit = 1
+        self.radius_lower_limit = 0
         
         self.output_x = 0
         self.output_y = 0
@@ -168,7 +173,7 @@ class hsv_detector:
                     cv2.circle(self.image_output, (i[0], i[1]), 2, (255, 0, 0), 3)
                 
                 #choose the biggest circle
-                if i[2] > biggest_radius:
+                if self.check_radius_limit(i[2]) and i[2] > biggest_radius:
                     temp_x = round(i[0] / self.camera_width * 2 - 1, 3)
                     temp_y = round(i[1] / self.camera_height * 2 - 1, 3)
                     
@@ -188,7 +193,43 @@ class hsv_detector:
             if coord_obj is not None:
                 cv2.circle(self.image_output, (coord_obj[0], coord_obj[1]), coord_obj[2], (0, 255, 0), 2)
                 cv2.circle(self.image_output, (coord_obj[0], coord_obj[1]), 2, (255, 0, 0), 3)
-                
+
+    def detect_contours(self):
+        object_contours,h=cv2.findContours(self.object_mask.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+        cv2.drawContours(self.image_output,object_contours,-1,(255,0,0),3)
+        
+        biggest_radius = 0
+        biggest_x = -1
+        biggest_y = -1
+        biggest_w = -1
+        biggest_h = -1
+        
+        self.circle_x = -1
+        self.circle_y = -1
+        self.circle_z = -1
+        for i in range(len(object_contours)):
+            object_moments = cv2.moments(object_contours[i])
+            x,y,w,h=cv2.boundingRect(object_contours[i])
+            temp_x = int(object_moments["m10"] / object_moments["m00"])
+            temp_y = int(object_moments["m01"] / object_moments["m00"])
+            if object_moments["m00"] >= biggest_radius:
+                self.circle_x = round(temp_x / self.camera_width * 2 - 1, 3)
+                self.circle_y = round(temp_y / self.camera_height * 2 - 1, 3)
+                biggest_radius = object_moments["m00"]
+                self.circle_z = biggest_radius
+                biggest_x = x
+                biggest_y = y
+                biggest_w = w
+                biggest_h = h
+            # else:
+            cv2.rectangle(self.image_output,(x,y),(x+w,y+h),(0,0,255), 2)
+            cv2.circle(self.image_output, (temp_x, temp_y), 5, (255, 255, 255), -1)
+            cv2.putText(self.image_output, str(i+1),(x,y+h),cv2.FONT_HERSHEY_SIMPLEX,1.0,(0,255,255))
+        
+        cv2.rectangle(self.image_output,(biggest_x,biggest_y),(biggest_x+biggest_w,biggest_y+biggest_h),(0,255,0), 2)
+        cv2.circle(self.image_output, (temp_x, temp_y), 5, (255, 0, 0), -1)
+        cv2.putText(self.image_output, "Selected",(biggest_x,biggest_y+biggest_h),cv2.FONT_HERSHEY_SIMPLEX,1.0,(0,255,0))
+
     def stabilizer(self):
         if self.circle_x != -1:
             if self.output_x != -1:
@@ -200,6 +241,10 @@ class hsv_detector:
         else:
             self.output_x = self.circle_x
             self.output_y = self.circle_y
+    
+    def check_radius_limit(self, temp_rad):
+        temp_rad = round(temp_rad / self.camera_height * 4, 3)
+        return temp_rad > self.radius_lower_limit and temp_rad < self.radius_upper_limit or not self.radius_limiter
     
     def check_horizontal_limit(self, temp_x):
         return temp_x > self.horizontal_lower_limit and temp_x < self.horizontal_upper_limit or not self.horizontal_limiter
@@ -249,7 +294,10 @@ class hsv_detector:
         if self.masking_enabled:
             self.field_masking()
         
-        self.detect_circle_object()
+        if self.detect_contours_mode:
+            self.detect_contours()
+        else:
+            self.detect_circle_object()
         
         if self.stabilizer_enabled:
             self.stabilizer()
@@ -270,6 +318,11 @@ class hsv_detector:
         self.horizontal_lower_limit = lower_limit
         self.horizontal_upper_limit = upper_limit
     
+    def enable_radius_limiter(self, lower_limit = 0, upper_limit = 1):
+        self.radius_limiter = True
+        self.radius_lower_limit = lower_limit
+        self.radius_upper_limit = upper_limit
+    
     def visualize(self):
         self.visualization_enabled = True
     
@@ -278,9 +331,9 @@ class hsv_detector:
     
     def record(self):
         self.record_enabled = True
-    
-    def get_distance(self, a, b):
-        return math.sqrt(math.pow(a, 2) + math.pow(b, 2))
+
+    def enable_contours_mode(self):
+        self.detect_contours_mode = True
                   
     def get_circle_coord(self):
         return self.circle_x, self.circle_y, self.circle_z
