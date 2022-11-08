@@ -1,3 +1,5 @@
 # created by virtualenv automatically
 /bin
 /lib
+/vision/__pycache__
+*.pyc
