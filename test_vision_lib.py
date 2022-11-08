@@ -13,7 +13,7 @@ vision.enable_averaging()
 vision.enable_contours_mode()
 vision.visualize()
 vision.stabilize()
-vision.record(record_output=True)
+# vision.record(record_output=True)
 while True:
     vision.main_process()
     coord_x, coord_y, coord_z = vision.get_circle_coord()

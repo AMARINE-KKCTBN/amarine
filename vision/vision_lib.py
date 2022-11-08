@@ -218,13 +218,14 @@ class hsv_detector:
         self.circle_y = -1
         self.circle_z = -1
         
-        self.average_x = -1
-        self.average_y = -1
-        self.average_z = -1
-        
-        choosen_total_x = 0
-        choosen_total_y = 0
-        choosen_count = 0
+        if self.averaging_enabled:
+            self.average_x = -1
+            self.average_y = -1
+            self.average_z = -1
+            
+            choosen_total_x = 0
+            choosen_total_y = 0
+            choosen_count = 0
 
         choosen_x = 0
         choosen_y = 0
@@ -236,9 +237,10 @@ class hsv_detector:
             temp_y = int(object_moments["m01"] / object_moments["m00"])
             temp_temp_x, temp_temp_y = self.coord_to_output(temp_x, temp_y)
             if  self.check_limit(temp_temp_x, temp_temp_y, h/2):
-                choosen_total_x += temp_temp_x
-                choosen_total_y += temp_temp_y
-                choosen_count += 1
+                if self.averaging_enabled:
+                    choosen_total_x += temp_temp_x
+                    choosen_total_y += temp_temp_y
+                    choosen_count += 1
                 if object_moments["m00"] >= biggest_radius:
                     biggest_radius = object_moments["m00"]
                     self.circle_x = temp_temp_x
@@ -260,15 +262,10 @@ class hsv_detector:
             self.average_y = choosen_total_y / choosen_count
             coord_x, coord_y = self.output_to_coord(self.average_x, self.average_y)
             cv2.circle(self.image_output, (coord_x, coord_y), 20, (0, 255, 0), 3)
-            # pid_x, pid_y = self.output_to_coord(self.pid(self.average_x), self.pid(self.average_y))
-            # self.put_text("pid x: " + str(self.pid(self.average_x)) + " | pid y: " + str(self.pid(self.average_y)))
-            # self.draw_green_line(self.average_x, -0.5, self.average_x, 0.5)
-            # cv2.circle(self.image_output, (pid_x, pid_y), 20, (0, 0, 255), -1)
         
         cv2.rectangle(self.image_output,(biggest_x,biggest_y),(biggest_x+biggest_w,biggest_y+biggest_h),(0,255,0), 2)
         cv2.circle(self.image_output, (choosen_x, choosen_y), 5, (255, 0, 0), -1)
         cv2.putText(self.image_output, "Selected",(biggest_x,biggest_y+biggest_h-5),cv2.FONT_HERSHEY_SIMPLEX,1.0,(0,255,0))
-        # print("w: " + str(biggest_w) + " | h: " + str(biggest_h))
 
     def put_text(self, text):
         cv2.putText(self.image_output, text,(1, 20),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255))
@@ -354,13 +351,16 @@ class hsv_detector:
         self.output_x, self.output_y = self.circle_x, self.circle_y
         
         if self.stabilizer_enabled:
-            self.stabilizer(self.circle_x, self.circle_y)
-            # self.stabilizer(self.average_x, self.average_y)
+            if self.averaging_enabled:
+                self.stabilizer(self.average_x, self.average_y)
+            else:
+                self.stabilizer(self.circle_x, self.circle_y)
             
         if self.object_detected():
-            cv2.circle(self.image_output, (self.output_to_coord(self.output_x, self.output_y)), 10, (255, 0, 255), 3)
+            cv2.circle(self.image_output, self.output_to_coord(self.output_x, self.output_y), 10, (255, 0, 255), 3)
+            cv2.putText(self.image_output, "Output", self.output_to_coord(self.output_x, self.output_y),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255))
+            self.put_text("output x: " + str(self.circle_x))
             
-        self.put_text("output x: " + str(self.circle_x))
         
         if self.visualization_enabled:
             self.line_visualization()
