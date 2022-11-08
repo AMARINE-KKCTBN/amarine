@@ -58,7 +58,7 @@ def Protocol(data, isRunning, isRelease, isRunningThruster):
             release_status = 1
             isRunningThruster.value = 0
         else:
-            if release_status == 1 and left == 0 and last_value == 0:
+            if release_status == 1:
                 false_status = 1
                 isRelease.value = 1
                 isRunningThruster.value = 0
@@ -145,9 +145,8 @@ def runMissile(port, isRelease):
             if isRelease.value == 1:
                 ser.write('1\n'.encode('utf-8'))
                 print("================================================================RELEASE TORPEDO")
-            # else: 
-            #     serial.write('0\n'.encode('utf-8'))
-                print("=======================================================LOCK TORPEDO")
+            else: 
+                print("================================================================LOCK TORPEDO")
             sleep(1)
     except KeyboardInterrupt: 
         print("Closing Serial Port... (/dev/ttyUSB0) at sending Data")
@@ -182,7 +181,7 @@ def runServo(cnt, cx, isRunning, isRunningThruster):
             if isRunning.value == 1:
                 coord_x = cx.value
                 if coord_x == -1:
-                    cnt.right()
+                    cnt.left()
                 else:
                     cnt.dynamicServo(coord_x)
                 # if coord_x >= -0.200 and coord_x <= 0.200:
@@ -203,14 +202,16 @@ def runServo(cnt, cx, isRunning, isRunningThruster):
  
 def runVision(vision, cx, isRunning):
     offset_x = 0.75
-    vision.enable_vertical_limiter(-0.1, 0.4)
-    vision.enable_horizontal_limiter(0, 1)
+    # vision.enable_vertical_limiter(-0.1, 0.4)
+    # vision.enable_horizontal_limiter(-1, -0.2)
+    vision.enable_vertical_limiter(0, 0.4)
+    # vision.enable_horizontal_limiter(-1, -0.2)
+    vision.enable_horizontal_limiter(0.2, 1)
     vision.enable_radius_limiter(0.1, 0.5)
     vision.enable_contours_mode()
     vision.visualize()
     vision.stabilize()
-    vision.record()
-    vision.record()
+    vision.enable_averaging()
     try:
         while True:
             if isRunning.value == 1:
@@ -263,7 +264,9 @@ if __name__ == "__main__":
         allServoPinConfig=[mainFin_servo, secondaryFin_servo],
     )
     try:
-        vision = vision_lib.hsv_detector(camera_height=240, camera_width=320, masking_enabled=False)
+        vision = vision_lib.hsv_detector(
+            # image_source = "Recorded video7.mp4",
+            camera_height=240, camera_width=320, masking_enabled=False)
         controller.initMainThruster()
 
         runFourThruster_process = Process(target=runFourThruster ,args=(controller, isRunning, ))
