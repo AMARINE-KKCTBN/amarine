@@ -5,7 +5,7 @@ from os import path
 # from simple_pid import PID
 
 class hsv_detector:
-    def __init__(self, image_source = 0, camera_height = 320, camera_width = 240, camera_fps = 30,
+    def __init__(self, image_source = 0, camera_height = 320, camera_width = 240, camera_fps = 30, image_resized = False,
                  detect_contours_mode = False, radius_limiter = False, 
                  stabilizer_enabled = False, masking_enabled = False, record_enabled = False, visualization_enabled = False,
                  averaging_enabled = False,
@@ -14,6 +14,8 @@ class hsv_detector:
         self.field_hsv_path = 'vision/field_hsv.json'
         self.circle_params_path = 'vision/circle_params.json'
         self.transform_params_path = 'vision/transform_params.json'
+        
+        self.image_resized = image_resized
         
         #init camera
         self.camera = cv2.VideoCapture(image_source)
@@ -54,6 +56,14 @@ class hsv_detector:
         self.output_y = 0
         self.output_z = 0
         
+        self.offset_x = 0
+        self.offset_y = 0
+        self.offset_z = 0
+        
+        self.output_coord = False
+        self.circle_coord = False
+        self.average_coord = False
+        
         # self.pid = PID(0.1, 0.1, 0.05, setpoint=0)
         
         self.read_params()
@@ -82,6 +92,8 @@ class hsv_detector:
     def read_camera(self):
         _,self.image_bgr = self.camera.read()
         #self.image_bgr = cv2.flip(self.image_bgr,1)
+        
+        self.image_bgr = cv2.resize(self.image_bgr, [self.camera_width, self.camera_height], interpolation=cv2.INTER_LINEAR)
 
         self.image_hsv = cv2.cvtColor(self.image_bgr, cv2.COLOR_BGR2HSV)
         
@@ -246,12 +258,12 @@ class hsv_detector:
                     self.circle_x = temp_temp_x
                     self.circle_y = temp_temp_y
                     self.circle_z = biggest_radius
-                    choosen_x = temp_x
-                    choosen_y = temp_y
-                    biggest_x = x
-                    biggest_y = y
-                    biggest_w = w
-                    biggest_h = h
+                    # choosen_x = temp_x
+                    # choosen_y = temp_y
+                    # biggest_x = x
+                    # biggest_y = y
+                    # biggest_w = w
+                    # biggest_h = h
             # else:
             cv2.rectangle(self.image_output,(x,y),(x+w,y+h),(0,0,255), 2)
             cv2.circle(self.image_output, (temp_x, temp_y), 5, (255, 255, 255), -1)
@@ -260,12 +272,12 @@ class hsv_detector:
         if choosen_count > 0 and self.averaging_enabled:
             self.average_x = choosen_total_x / choosen_count
             self.average_y = choosen_total_y / choosen_count
-            coord_x, coord_y = self.output_to_coord(self.average_x, self.average_y)
-            cv2.circle(self.image_output, (coord_x, coord_y), 20, (0, 255, 0), 3)
+            # coord_x, coord_y = self.output_to_coord(self.average_x, self.average_y)
+            # cv2.circle(self.image_output, (coord_x, coord_y), 20, (0, 255, 0), 3)
         
-        cv2.rectangle(self.image_output,(biggest_x,biggest_y),(biggest_x+biggest_w,biggest_y+biggest_h),(0,255,0), 2)
-        cv2.circle(self.image_output, (choosen_x, choosen_y), 5, (255, 0, 0), -1)
-        cv2.putText(self.image_output, "Selected",(biggest_x,biggest_y+biggest_h-5),cv2.FONT_HERSHEY_SIMPLEX,1.0,(0,255,0))
+        # cv2.rectangle(self.image_output,(biggest_x,biggest_y),(biggest_x+biggest_w,biggest_y+biggest_h),(0,255,0), 2)
+        # cv2.circle(self.image_output, (choosen_x, choosen_y), 5, (255, 0, 0), -1)
+        # cv2.putText(self.image_output, "Selected",(biggest_x,biggest_y+biggest_h-5),cv2.FONT_HERSHEY_SIMPLEX,1.0,(0,255,0))
 
     def put_text(self, text):
         cv2.putText(self.image_output, text,(1, 20),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255))
@@ -302,17 +314,13 @@ class hsv_detector:
         return temp_y > self.vertical_lower_limit and temp_y < self.vertical_upper_limit or not self.vertical_limiter
     
     def draw_line(self, start_x, start_y, end_x, end_y):
-        start_point_x = int((start_x + 1) / 2 * self.camera_width)
-        start_point_y = int((start_y + 1) / 2 * self.camera_height)
-        end_point_x = int((end_x + 1) / 2 * self.camera_width)
-        end_point_y = int((end_y + 1) / 2 * self.camera_height)
+        start_point_x, start_point_y = self.output_to_coord(start_x, start_y)
+        end_point_x, end_point_y = self.output_to_coord(end_x, end_y)
         cv2.line(self.image_output, (start_point_x, start_point_y), (end_point_x, end_point_y), (255, 255, 255), 1)
     
     def draw_green_line(self, start_x, start_y, end_x, end_y):
-        start_point_x = int((start_x + 1) / 2 * self.camera_width)
-        start_point_y = int((start_y + 1) / 2 * self.camera_height)
-        end_point_x = int((end_x + 1) / 2 * self.camera_width)
-        end_point_y = int((end_y + 1) / 2 * self.camera_height)
+        start_point_x, start_point_y = self.output_to_coord(start_x, start_y)
+        end_point_x, end_point_y = self.output_to_coord(end_x, end_y)
         cv2.line(self.image_output, (start_point_x, start_point_y), (end_point_x, end_point_y), (0, 255, 0), 3)
         
     def line_visualization(self):
@@ -326,22 +334,25 @@ class hsv_detector:
         #horizontal right limit
         self.draw_line(self.horizontal_upper_limit, -1, self.horizontal_upper_limit, 1)
         #horizontal center reference
-        self.draw_line(self.horizontal_upper_limit/2, -1, self.horizontal_upper_limit/2, 1)
+        self.draw_line(self.offset_x, -1, self.offset_x, 1)
         
         #draw coord_x
         # if self.circle_x is not -1:
         #     self.draw_green_line(self.circle_x, 0, self.circle_x, 0.5)
-        if self.object_detected():
-            self.draw_green_line(self.output_x, 0, self.output_x, 0.5)
+        # if self.object_detected():
+        #     self.draw_green_line(self.output_x, self.vertical_lower_limit, self.output_x, self.vertical_upper_limit)
     
     def main_process(self):
         self.read_camera()
+        
         self.filter_and_morph_image()
         
         self.image_output=cv2.bitwise_and(self.image_bgr, self.image_bgr, mask = self.object_mask)
         
         if self.masking_enabled:
             self.field_masking()
+        
+        cv2.waitKey(100)
         
         if self.detect_contours_mode:
             self.detect_contours()
@@ -357,8 +368,15 @@ class hsv_detector:
                 self.stabilizer(self.circle_x, self.circle_y)
             
         if self.object_detected():
-            cv2.circle(self.image_output, self.output_to_coord(self.output_x, self.output_y), 10, (255, 0, 255), 3)
-            cv2.putText(self.image_output, "Output", self.output_to_coord(self.output_x, self.output_y),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255))
+            if self.output_coord:
+                cv2.circle(self.image_output, self.output_to_coord(self.output_x, self.output_y), 20, (0, 255, 0), 2)
+                cv2.putText(self.image_output, "Output", self.output_to_coord(self.output_x, self.output_y),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255))
+            if self.average_coord:
+                cv2.circle(self.image_output, self.output_to_coord(self.average_x, self.average_y), 20, (0, 0, 255), 2)
+                cv2.putText(self.image_output, "Average", self.output_to_coord(self.average_x, self.average_y),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255))
+            if self.circle_coord:
+                cv2.circle(self.image_output, self.output_to_coord(self.circle_x, self.circle_y), 20, (255, 0, 0), 2)
+                cv2.putText(self.image_output, "Circle", self.output_to_coord(self.circle_x, self.circle_y),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255))
             # self.put_text("output x: " + str(self.circle_x))
             
         
@@ -417,8 +435,28 @@ class hsv_detector:
             input_file = temp_name
             self.record_input_video = cv2.VideoWriter(input_file, self.video_codec, self.camera_fps, (self.camera_width, self.camera_height))
 
+    def resize_input_image(self, camera_width, camera_height):
+        self.camera_width = camera_width
+        self.camera_height = camera_height
+        self.image_resized = True
+    
     def enable_contours_mode(self):
         self.detect_contours_mode = True
                   
     def get_circle_coord(self):
+        self.circle_coord = True
         return self.circle_x, self.circle_y, self.circle_z
+                  
+    def get_output_coord(self):
+        self.output_coord = True
+        return round(self.output_x - self.offset_x, 3), round(self.output_y, 3), round(self.output_z, 3)
+                  
+    def get_average_coord(self):
+        self.average_coord = True
+        return self.average_x, self.average_y, self.average_z
+    
+    def set_offset_x(self, offset_x):
+        self.offset_x = offset_x
+        
+    def get_offset_x(self):
+        return round(self.offset_x, 3)
