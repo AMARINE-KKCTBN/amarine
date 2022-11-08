@@ -359,7 +359,7 @@ class hsv_detector:
         if self.object_detected():
             cv2.circle(self.image_output, self.output_to_coord(self.output_x, self.output_y), 10, (255, 0, 255), 3)
             cv2.putText(self.image_output, "Output", self.output_to_coord(self.output_x, self.output_y),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255))
-            self.put_text("output x: " + str(self.circle_x))
+            # self.put_text("output x: " + str(self.circle_x))
             
         
         if self.visualization_enabled:
