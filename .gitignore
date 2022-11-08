@@ -1,4 +1,6 @@
 # created by virtualenv automatically
 /bin
 /lib
-*.pyc
+/controller/__pycache__
+/vision/__pycache__
+*.mp4

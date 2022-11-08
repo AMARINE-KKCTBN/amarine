@@ -15,11 +15,11 @@ class Controller:
     def staticThruster(self, percentage):
         self.thrusterPinConfig[0].throttle = self.percentageConverter(percentage, 5) * -1
         sleep(0.002)
-        self.thrusterPinConfig[1].throttle = self.percentageConverter(percentage, 15)
+        self.thrusterPinConfig[1].throttle = self.percentageConverter(percentage, 10)
         sleep(0.002)
         self.thrusterPinConfig[2].throttle = self.percentageConverter(percentage, 0) * -1
         sleep(0.002)
-        self.thrusterPinConfig[3].throttle = self.percentageConverter(percentage, 10)
+        self.thrusterPinConfig[3].throttle = self.percentageConverter(percentage, 5)
         sleep(0.002)
     
     def dynamicServo(self, coord_x):
@@ -68,7 +68,9 @@ class Controller:
         sleep(0.002)
     
     def percentageConverter(self, percentage, offset):
-        percentage += offset
+        # for i in range (1, offset+1):
+        percentage+=offset
+        #     sleep(0.002)
         percentage /= 100
         return percentage
 

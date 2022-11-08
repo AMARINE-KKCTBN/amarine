@@ -41,6 +41,7 @@ def Protocol(data, isRunning, isRelease, isRunningThruster):
                 else:
                     left = 1
         else:
+            isRelease.value = 1
             print("Please Reset The Right Switch...")
 
     if right == 0:
@@ -51,7 +52,7 @@ def Protocol(data, isRunning, isRelease, isRunningThruster):
 
     else:
         if left == 1 and last_value == 0 or left == 1 and last_value == 1:
-            isRelease.value = 0
+            isRelease.value = 1
             isRunningThruster.value = 1
         elif left == 0 and last_value == 1:
             isRelease.value = 1
@@ -62,9 +63,9 @@ def Protocol(data, isRunning, isRelease, isRunningThruster):
                 false_status = 1
                 isRelease.value = 1
                 isRunningThruster.value = 0
-            else:
-                isRelease.value = 0
-                isRunningThruster.value = 0
+            # else:
+            #     isRelease.value = 0
+            #     isRunningThruster.value = 0
 
     last_value = left
 
@@ -142,6 +143,7 @@ def runMissile(port, isRelease):
         exitProcess('runMissile')
     try:
         while True:
+            print("IS RELEASE VALUE,", isRelease.value)
             if isRelease.value == 1:
                 ser.write('1\n'.encode('utf-8'))
                 print("================================================================RELEASE TORPEDO")
