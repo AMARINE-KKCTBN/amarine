@@ -58,7 +58,7 @@ def Protocol(data, isRunning, isRelease, isRunningThruster):
             release_status = 1
             isRunningThruster.value = 0
         else:
-            if release_status == 1:
+            if release_status == 1 and left == 0 and last_value == 0:
                 false_status = 1
                 isRelease.value = 1
                 isRunningThruster.value = 0
@@ -209,6 +209,7 @@ def runVision(vision, cx, isRunning):
     vision.enable_contours_mode()
     vision.visualize()
     vision.stabilize()
+    vision.record()
     vision.record()
     try:
         while True:

@@ -27,8 +27,11 @@ class hsv_detector:
         
         self.detect_contours_mode = detect_contours_mode
 
+        self.detect_contours_mode = detect_contours_mode
+
         self.vertical_limiter = vertical_limiter
         self.horizontal_limiter = horizontal_limiter
+        self.radius_limiter = radius_limiter
         self.radius_limiter = radius_limiter
         
         self.vertical_upper_limit = 0.5
@@ -36,6 +39,9 @@ class hsv_detector:
         
         self.horizontal_upper_limit = 1
         self.horizontal_lower_limit = 0
+        
+        self.radius_upper_limit = 1
+        self.radius_lower_limit = 0
         
         self.radius_upper_limit = 1
         self.radius_lower_limit = 0
@@ -173,7 +179,7 @@ class hsv_detector:
                     cv2.circle(self.image_output, (i[0], i[1]), 2, (255, 0, 0), 3)
                 
                 #choose the biggest circle
-                if self.check_radius_limit(i[2]) and i[2] > biggest_radius:
+                if self.check_radius_limit(i[2]) and self.check_radius_limit(i[2]) and i[2] > biggest_radius:
                     temp_x = round(i[0] / self.camera_width * 2 - 1, 3)
                     temp_y = round(i[1] / self.camera_height * 2 - 1, 3)
                     
@@ -258,6 +264,10 @@ class hsv_detector:
         temp_rad = round(temp_rad / self.camera_height * 4, 3)
         return temp_rad > self.radius_lower_limit and temp_rad < self.radius_upper_limit or not self.radius_limiter
     
+    def check_radius_limit(self, temp_rad):
+        temp_rad = round(temp_rad / self.camera_height * 4, 3)
+        return temp_rad > self.radius_lower_limit and temp_rad < self.radius_upper_limit or not self.radius_limiter
+    
     def check_horizontal_limit(self, temp_x):
         return temp_x > self.horizontal_lower_limit and temp_x < self.horizontal_upper_limit or not self.horizontal_limiter
                 
@@ -309,7 +319,10 @@ class hsv_detector:
         if self.detect_contours_mode:
             self.detect_contours()
         else:
-            self.detect_circle_object()
+            if self.detect_contours_mode:
+                self.detect_contours()
+            else:
+                self.detect_circle_object()
         
         if self.stabilizer_enabled:
             self.stabilizer()
@@ -329,6 +342,11 @@ class hsv_detector:
         self.horizontal_limiter = True
         self.horizontal_lower_limit = lower_limit
         self.horizontal_upper_limit = upper_limit
+    
+    def enable_radius_limiter(self, lower_limit = 0, upper_limit = 1):
+        self.radius_limiter = True
+        self.radius_lower_limit = lower_limit
+        self.radius_upper_limit = upper_limit
     
     def enable_radius_limiter(self, lower_limit = 0, upper_limit = 1):
         self.radius_limiter = True
