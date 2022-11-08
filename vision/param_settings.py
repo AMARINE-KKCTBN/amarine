@@ -206,13 +206,26 @@ while(1):
 
     object_kernel = np.ones((transform_params['object_morph_kernel'],transform_params['object_morph_kernel']),"uint8")
 
-    if object_hsv['H Lower'] > object_hsv['H Higher']:
-        object_hsv['H Lower'], object_hsv['H Higher'] = object_hsv['H Higher'], object_hsv['H Lower']
-    #red
-    object_LowerRegion = np.array([object_hsv['H Lower'],object_hsv['S Lower'],object_hsv['V Lower']],np.uint8)
-    object_upperRegion = np.array([object_hsv['H Higher'],object_hsv['S Higher'],object_hsv['V Higher']],np.uint8)
-
     object_mask = hsv
+    
+    if object_hsv['H Lower'] < object_hsv['H Higher']:
+        #normal
+        object_LowerRegion = np.array([object_hsv['H Lower'],object_hsv['S Lower'],object_hsv['V Lower']],np.uint8)
+        object_upperRegion = np.array([object_hsv['H Higher'],object_hsv['S Higher'],object_hsv['V Higher']],np.uint8)
+        object_mask = cv2.inRange(object_mask,object_LowerRegion,object_upperRegion)
+    else:
+        #h lower > h higher
+        object_LowerRegion = np.array([0,object_hsv['S Lower'],object_hsv['V Lower']],np.uint8)
+        object_upperRegion = np.array([object_hsv['H Higher'],object_hsv['S Higher'],object_hsv['V Higher']],np.uint8)
+        object_hue_lower = cv2.inRange(object_mask,object_LowerRegion,object_upperRegion)
+        
+        object_LowerRegion = np.array([object_hsv['H Lower'],object_hsv['S Lower'],object_hsv['V Lower']],np.uint8)
+        object_upperRegion = np.array([179,object_hsv['S Higher'],object_hsv['V Higher']],np.uint8)
+        object_hue_higher = cv2.inRange(object_mask,object_LowerRegion,object_upperRegion)
+        
+        object_mask = cv2.bitwise_or(object_hue_lower, object_hue_higher)
+        
+
     #morphological operations
     object_mask = cv2.morphologyEx(object_mask,cv2.MORPH_CLOSE, object_kernel)
     object_mask = cv2.morphologyEx(object_mask,cv2.MORPH_OPEN, object_kernel)
@@ -221,7 +234,6 @@ while(1):
     # object_mask = cv2.dilate(object_mask, object_kernel,iterations=1)
     # object_mask = cv2.erode(object_mask, object_kernel, iterations=2)
 
-    object_mask = cv2.inRange(object_mask,object_LowerRegion,object_upperRegion)
 
     #morphological operations
     # object_mask = cv2.morphologyEx(hsv,cv2.MORPH_OPEN, object_kernel)
@@ -312,11 +324,11 @@ while(1):
     # cv2.imshow("Field",output_field)
     # cv2.imshow("Contours Original",output_contours_original)
     # cv2.imshow("Contours Approx",output_contours_approx)
-    cv2.imshow("Contours Hull",output_contours_hull)
+    # cv2.imshow("Contours Hull",output_contours_hull)
     # cv2.imshow("Enclosed Contours Hull",enclosed_mask)
-    cv2.imshow("Output Enclosed Contours Hull",output_enclosed_mask)
+    # cv2.imshow("Output Enclosed Contours Hull",output_enclosed_mask)
     cv2.imshow("Canny", object_edges)
-    cv2.imshow("Field Canny", field_edges)
+    # cv2.imshow("Field Canny", field_edges)
     # cv2.imshow("Original", img)
     # cv2.imshow("Ball detect ",circles)
 
