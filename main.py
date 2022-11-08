@@ -108,7 +108,7 @@ def runFourThruster(cnt, isRunning):
 
 def runMainThruster(cnt, isRunning, isRunningThruster):
     last_value = 0
-    max_speed = 10
+    max_speed = 12
     min_speed = 1
     try:
         while True:
@@ -179,17 +179,21 @@ def runServo(cnt, cx, isRunning, isRunningThruster):
     coord_x = 0
     try:
         while True:
-            if isRunning.value == 1 and isRunningThruster.value == 1:
+            if isRunning.value == 1:
                 coord_x = cx.value
-                if coord_x >= -0.200 and coord_x <= 0.200:
-                    cnt.forward()
-                    print("FORWARD")
-                elif coord_x > 0.200:
+                if coord_x == -1:
                     cnt.right()
-                    print("RIGHT")
                 else:
-                    cnt.left()            
-                    print("LEFT")
+                    cnt.dynamicServo(coord_x)
+                # if coord_x >= -0.200 and coord_x <= 0.200:
+                #     cnt.forward()
+                #     print("FORWARD")
+                # elif coord_x > 0.200:
+                #     cnt.right()
+                #     print("RIGHT")
+                # else:
+                #     cnt.left()            
+                #     print("LEFT")
             else:
                 cnt.forward()
                 # print("Stopping Servo...")
@@ -198,11 +202,14 @@ def runServo(cnt, cx, isRunning, isRunningThruster):
         exitProcess("runServo")
  
 def runVision(vision, cx, isRunning):
-    offset_x = 0.5
-    vision.enable_vertical_limiter(0, 0.5)
+    offset_x = 0.75
+    vision.enable_vertical_limiter(-0.1, 0.4)
     vision.enable_horizontal_limiter(0, 1)
+    vision.enable_radius_limiter(0.1, 0.5)
+    vision.enable_contours_mode()
     vision.visualize()
     vision.stabilize()
+    vision.record()
     try:
         while True:
             if isRunning.value == 1:
@@ -214,8 +221,8 @@ def runVision(vision, cx, isRunning):
                     coord_x -= offset_x
                 print("coord(x,y,z): " + str(vision.get_circle_coord()))
                 cx.value = coord_x
-                # if not vision.show_image():
-                #     break 
+                if not vision.show_image():
+                    break 
             else:
                 pass
                 # print("Stopping Vision...")

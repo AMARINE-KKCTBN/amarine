@@ -13,14 +13,29 @@ class Controller:
         self.allServoPinConfig = allServoPinConfig
         
     def staticThruster(self, percentage):
+        if self.thrusterPinConfig[0] or self.thrusterPinConfig[1]:
+            percentage+=5
+        if self.thrusterPinConfig[1] or self.thrusterPinConfig[3]:
+            percentage+=1
         percentage /= 100
         self.thrusterPinConfig[0].throttle = percentage * -1
         sleep(0.002)
-        self.thrusterPinConfig[1].throttle = percentage 
+        self.thrusterPinConfig[1].throttle = percentage
         sleep(0.002)
         self.thrusterPinConfig[2].throttle = percentage * -1
         sleep(0.002)
-        self.thrusterPinConfig[3].throttle = percentage 
+        self.thrusterPinConfig[3].throttle = percentage
+        sleep(0.002)
+    
+    def dynamicServo(self, coord_x):
+        offset = 90
+        deg_range = 60
+        coord_range = 0.25
+        coord2deg = coord_x / coord_range * deg_range
+        output = offset + coord2deg
+        self.allServoPinConfig[0].set_pulse_width_range(500, 2500)
+        sleep(0.002)
+        self.allServoPinConfig[0].angle = output
         sleep(0.002)
 
     def mainThruster(self, thruster_speed):        
@@ -40,13 +55,13 @@ class Controller:
     def left(self):
         self.allServoPinConfig[0].set_pulse_width_range(500, 2500)
         sleep(0.002)
-        self.allServoPinConfig[0].angle = 150
+        self.allServoPinConfig[0].angle = 30
         sleep(0.002)
 
     def right(self):
         self.allServoPinConfig[0].set_pulse_width_range(500, 2500)
         sleep(0.002)
-        self.allServoPinConfig[0].angle = 30
+        self.allServoPinConfig[0].angle = 150
         sleep(0.002)
 
     def stop(self):
