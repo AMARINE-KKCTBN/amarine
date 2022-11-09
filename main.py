@@ -267,7 +267,7 @@ if __name__ == "__main__":
     )
     try:
         vision = vision_lib.hsv_detector(
-            # image_source = "Recorded video7.mp4",
+            # image_source = "Recorded video7.mp4",)
             camera_height=240, camera_width=320, masking_enabled=False)
         controller.initMainThruster()
 

@@ -11,15 +11,16 @@ class Controller:
         self.thrusterPinConfig = thrusterPinConfig
         self.mainThrusterPinConfig = mainThrusterPinConfig
         self.allServoPinConfig = allServoPinConfig
+        self.last = 0
         
     def staticThruster(self, percentage):
         self.thrusterPinConfig[0].throttle = self.percentageConverter(percentage, 5) * -1
         sleep(0.002)
-        self.thrusterPinConfig[1].throttle = self.percentageConverter(percentage, 10)
+        self.thrusterPinConfig[1].throttle = self.percentageConverter(percentage, 15)
         sleep(0.002)
         self.thrusterPinConfig[2].throttle = self.percentageConverter(percentage, 0) * -1
         sleep(0.002)
-        self.thrusterPinConfig[3].throttle = self.percentageConverter(percentage, 5)
+        self.thrusterPinConfig[3].throttle = self.percentageConverter(percentage, 10)
         sleep(0.002)
     
     def dynamicServo(self, coord_x):
@@ -68,15 +69,20 @@ class Controller:
         sleep(0.002)
     
     def percentageConverter(self, percentage, offset):
-        # for i in range (1, offset+1):
-        percentage+=offset
-        #     sleep(0.002)
+        if self.last == 1:
+            if percentage == 0:
+                self.last = 0
+            else:
+                percentage+=offset
+        else:
+            if percentage == 0:
+                pass
+            else:
+                for i in range (1, offset+1):
+                    percentage+=offset
+                    sleep(0.002)
+                self.last = 1
         percentage /= 100
         return percentage
 
-    def cleanup(self):
-        GPIO.output(self.stepperPinConfig[3], GPIO.LOW)
-        GPIO.output(self.stepperPinConfig[2], GPIO.LOW)
-        GPIO.output(self.stepperPinConfig[1], GPIO.LOW)
-        GPIO.output(self.stepperPinConfig[0], GPIO.LOW)
 
