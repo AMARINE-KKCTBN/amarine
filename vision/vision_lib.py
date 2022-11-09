@@ -69,7 +69,6 @@ class hsv_detector:
         self.output_coord = False
         self.circle_coord = False
         self.average_coord = False
-        
         # self.pid = PID(0.1, 0.1, 0.05, setpoint=0)
         
         self.read_params()
@@ -264,6 +263,7 @@ class hsv_detector:
                     self.circle_x = temp_temp_x
                     self.circle_y = temp_temp_y
                     self.circle_z = biggest_radius
+
                     # choosen_x = temp_x
                     # choosen_y = temp_y
                     # biggest_x = x
@@ -384,6 +384,7 @@ class hsv_detector:
             if self.output_coord:
                 cv2.circle(self.image_output, self.output_to_coord(self.output_x, self.output_y), 20, (0, 255, 0), 2)
                 cv2.putText(self.image_output, "Output", self.output_to_coord(self.output_x, self.output_y),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255))
+
             # self.put_text("output x: " + str(self.circle_x))
             
         
@@ -391,9 +392,9 @@ class hsv_detector:
             self.line_visualization()
         
         if self.record_enabled:
-            if self.record_output!=True:
+            if self.record_output==True:
                 self.record_output_video.write(self.image_output)
-            if self.record_input!=True:
+            if self.record_input==True:
                 self.record_input_video.write(self.image_bgr)
     
     def object_detected(self):
@@ -422,7 +423,7 @@ class hsv_detector:
     
     def stabilize(self):
         self.stabilizer_enabled = True
-    
+   
     def record(self, file_name = "Recorded video", record_output = True, record_input = True):
         self.record_enabled = True
         
