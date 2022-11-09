@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
 import json
-from os import path
+# from os import path
+import os
 # from simple_pid import PID
 
 class hsv_detector:
@@ -16,6 +17,11 @@ class hsv_detector:
         self.transform_params_path = 'vision/transform_params.json'
         
         self.image_resized = image_resized
+        
+        if isinstance(image_source, int):
+            self.delay_enable = False
+        else:
+            self.delay_enable = True
         
         #init camera
         self.camera = cv2.VideoCapture(image_source)
@@ -351,8 +357,9 @@ class hsv_detector:
         
         if self.masking_enabled:
             self.field_masking()
-        
-        cv2.waitKey(100)
+            
+        if self.delay_enable == True:
+            cv2.waitKey(100)
         
         if self.detect_contours_mode:
             self.detect_contours()
@@ -368,15 +375,15 @@ class hsv_detector:
                 self.stabilizer(self.circle_x, self.circle_y)
             
         if self.object_detected():
-            if self.output_coord:
-                cv2.circle(self.image_output, self.output_to_coord(self.output_x, self.output_y), 20, (0, 255, 0), 2)
-                cv2.putText(self.image_output, "Output", self.output_to_coord(self.output_x, self.output_y),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255))
-            if self.average_coord:
-                cv2.circle(self.image_output, self.output_to_coord(self.average_x, self.average_y), 20, (0, 0, 255), 2)
-                cv2.putText(self.image_output, "Average", self.output_to_coord(self.average_x, self.average_y),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255))
             if self.circle_coord:
                 cv2.circle(self.image_output, self.output_to_coord(self.circle_x, self.circle_y), 20, (255, 0, 0), 2)
                 cv2.putText(self.image_output, "Circle", self.output_to_coord(self.circle_x, self.circle_y),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255))
+            if self.average_coord:
+                cv2.circle(self.image_output, self.output_to_coord(self.average_x, self.average_y), 20, (0, 0, 255), 2)
+                cv2.putText(self.image_output, "Average", self.output_to_coord(self.average_x, self.average_y),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255))
+            if self.output_coord:
+                cv2.circle(self.image_output, self.output_to_coord(self.output_x, self.output_y), 20, (0, 255, 0), 2)
+                cv2.putText(self.image_output, "Output", self.output_to_coord(self.output_x, self.output_y),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255))
             # self.put_text("output x: " + str(self.circle_x))
             
         
@@ -384,9 +391,9 @@ class hsv_detector:
             self.line_visualization()
         
         if self.record_enabled:
-            if self.record_output:
+            if self.record_output!=True:
                 self.record_output_video.write(self.image_output)
-            if self.record_input:
+            if self.record_input!=True:
                 self.record_input_video.write(self.image_bgr)
     
     def object_detected(self):
@@ -416,7 +423,7 @@ class hsv_detector:
     def stabilize(self):
         self.stabilizer_enabled = True
     
-    def record(self, file_name = "Recorded video", record_output = False, record_input = True):
+    def record(self, file_name = "Recorded video", record_output = True, record_input = True):
         self.record_enabled = True
         
         self.record_output = record_output
@@ -425,13 +432,13 @@ class hsv_detector:
         file_count = 1
         self.video_codec = cv2.VideoWriter_fourcc(*'mp4v') ##(*'XVID')
         temp_name = file_name + ext
-        while path.isfile(temp_name):
+        while os.path.isfile(temp_name):
             file_count += 1
             temp_name = file_name + str(file_count) + ext
-        if record_output:
+        if record_output==True:
             output_file = "[Output]-" + temp_name
             self.record_output_video = cv2.VideoWriter(output_file, self.video_codec, self.camera_fps, (self.camera_width, self.camera_height))
-        if record_input:
+        if record_input==True:
             input_file = temp_name
             self.record_input_video = cv2.VideoWriter(input_file, self.video_codec, self.camera_fps, (self.camera_width, self.camera_height))
 
@@ -445,7 +452,7 @@ class hsv_detector:
                   
     def get_circle_coord(self):
         self.circle_coord = True
-        return self.circle_x, self.circle_y, self.circle_z
+        return round(self.circle_x - self.offset_x, 3), round(self.circle_y, 3), round(self.circle_z, 3)
                   
     def get_output_coord(self):
         self.output_coord = True
@@ -453,7 +460,7 @@ class hsv_detector:
                   
     def get_average_coord(self):
         self.average_coord = True
-        return self.average_x, self.average_y, self.average_z
+        return round(self.average_x - self.offset_x, 3), round(self.average_y, 3), round(self.average_z, 3)
     
     def set_offset_x(self, offset_x):
         self.offset_x = offset_x

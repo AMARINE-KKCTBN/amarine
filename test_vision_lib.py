@@ -25,13 +25,15 @@ vision.resize_input_image(640, 480)
 vision.visualize()
 vision.stabilize()
 # vision.record(record_output=True)
+wait_count = 0
+wait_limit = 10
 while True:
     vision.main_process()
-    coord_x, coord_y, coord_z = vision.get_output_coord()
     # if coord_x < 0:
     #     coord_x = -1
     # else:
     if vision.object_detected():
+        coord_x, coord_y, coord_z = vision.get_output_coord()
         # coord_x -= vision.get_offset_x()
         text = "coord: " + str(vision.get_output_coord()) + " | output: " + str(round(simulated_servo(coord_x), 3))
         vision.put_text(text)
